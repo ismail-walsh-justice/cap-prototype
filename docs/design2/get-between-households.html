@@ -6,7 +6,7 @@
   <title>How will the children get between households? – Design 2</title>
   <link rel="stylesheet" href="../assets/govuk-frontend.min.css">
 </head>
-<body class="govuk-template__body">
+<body class="govuk-template__body"><script>document.body.className += ' js-enabled'</script>
 
 <header class="govuk-header" data-module="govuk-header">
   <div class="govuk-header__container govuk-width-container">
@@ -98,15 +98,14 @@
             </div>
           </div>
 
-          <button class="govuk-button" data-module="govuk-button" id="continue-btn">
-            Continue
-          </button>
+          <div class="govuk-button-group">
+            <button class="govuk-button" data-module="govuk-button" id="continue-btn">
+              Continue
+            </button>
+            <a class="govuk-link" href="#" id="skip-link">We do not need to decide how the children get between households</a>
+          </div>
 
         </form>
-
-        <p class="govuk-body">
-          <a class="govuk-link" href="#" id="skip-link">We do not need to decide how the children get between households</a>
-        </p>
 
       </div>
     </div>
@@ -159,7 +158,7 @@
   var backLink = document.getElementById('back-link');
   backLink.href = childIdx === 0 ? 'task-list.html' : 'get-between-households.html?child=' + (childIdx - 1);
 
-  document.getElementById('apply-all-group').style.display = 'none';
+  if (childCount >= 2) { document.getElementById('apply-all-group').style.display = 'block'; }
 
   var plan = getChildPlan(childIdx);
   var savedAnswers = (plan && plan.answers) ? plan.answers : {};
@@ -216,12 +215,25 @@
 
     var updates = { getBetweenHouseholds: selectedRadio.value };
     updates.getBetweenHouseholdsOther = selectedRadio.value === 'other' ? otherText : '';
-    navigate(updates);
+    var applyAll = document.getElementById('apply-to-all');
+    if (applyAll && applyAll.checked) {
+      applyAnswerToAllChildren(updates);
+      window.location.href = 'where-handover.html?child=0';
+    } else {
+      navigate(updates);
+    }
   });
 
   document.getElementById('skip-link').addEventListener('click', function (e) {
     e.preventDefault();
-    navigate({ getBetweenHouseholds: 'skip', getBetweenHouseholdsOther: '' });
+    var skipUpdates = { getBetweenHouseholds: 'skip', getBetweenHouseholdsOther: '' };
+    var applyAll = document.getElementById('apply-to-all');
+    if (applyAll && applyAll.checked) {
+      applyAnswerToAllChildren(skipUpdates);
+      window.location.href = 'where-handover.html?child=0';
+    } else {
+      navigate(skipUpdates);
+    }
   });
 })();
 </script>

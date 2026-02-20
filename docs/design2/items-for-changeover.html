@@ -6,7 +6,7 @@
   <title>What items need to go between households? – Design 2</title>
   <link rel="stylesheet" href="../assets/govuk-frontend.min.css">
 </head>
-<body class="govuk-template__body">
+<body class="govuk-template__body"><script>document.body.className += ' js-enabled'</script>
 
 <header class="govuk-header" data-module="govuk-header">
   <div class="govuk-header__container govuk-width-container">
@@ -64,15 +64,14 @@
             </div>
           </div>
 
-          <button class="govuk-button" data-module="govuk-button" id="continue-btn">
-            Continue
-          </button>
+          <div class="govuk-button-group">
+            <button class="govuk-button" data-module="govuk-button" id="continue-btn">
+              Continue
+            </button>
+            <a class="govuk-link" href="#" id="skip-link">We do not need to decide what items need to go between households</a>
+          </div>
 
         </form>
-
-        <p class="govuk-body">
-          <a class="govuk-link" href="#" id="skip-link">We do not need to decide what items need to go between households</a>
-        </p>
 
       </div>
     </div>
@@ -118,7 +117,7 @@
 
   document.getElementById('page-heading').textContent = 'What items need to go between ' + escHtml(childName) + '’s households?';
 
-  document.getElementById('apply-all-group').style.display = 'none';
+  if (childCount >= 2) { document.getElementById('apply-all-group').style.display = 'block'; }
 
   // Back link
   var backLink = document.getElementById('back-link');
@@ -165,12 +164,24 @@
       return;
     }
 
-    navigate({ itemsForChangeover: text });
+    var applyAll = document.getElementById('apply-to-all');
+    if (applyAll && applyAll.checked) {
+      applyAnswerToAllChildren({ itemsForChangeover: text });
+      window.location.href = 'task-list.html';
+    } else {
+      navigate({ itemsForChangeover: text });
+    }
   });
 
   document.getElementById('skip-link').addEventListener('click', function (e) {
     e.preventDefault();
-    navigate({ itemsForChangeover: 'skip' });
+    var applyAll = document.getElementById('apply-to-all');
+    if (applyAll && applyAll.checked) {
+      applyAnswerToAllChildren({ itemsForChangeover: 'skip' });
+      window.location.href = 'task-list.html';
+    } else {
+      navigate({ itemsForChangeover: 'skip' });
+    }
   });
 })();
 </script>

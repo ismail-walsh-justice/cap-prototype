@@ -6,7 +6,7 @@
   <title>Will the arrangements change during school holidays? – Design 3</title>
   <link rel="stylesheet" href="../assets/govuk-frontend.min.css">
 </head>
-<body class="govuk-template__body">
+<body class="govuk-template__body"><script>document.body.className += ' js-enabled'</script>
 
 <header class="govuk-header" data-module="govuk-header">
     <div class="govuk-header__container govuk-width-container">
@@ -71,12 +71,10 @@
           </div>
 
           <div class="govuk-button-group govuk-!-margin-top-6">
-            <button class="govuk-button" data-module="govuk-button" id="continue-btn">Continue</button>
+            <button class="govuk-button" data-module="govuk-button" id="continue-btn" type="button">Continue</button>
+            <a class="govuk-link" href="#" id="skip-link">We do not need to decide how arrangements change during school holidays</a>
           </div>
         </form>
-        <p class="govuk-body">
-          <a class="govuk-link" href="#" id="skip-link">We do not need to decide how arrangements change during school holidays</a>
-        </p>
       </div>
     </div>
 </main>

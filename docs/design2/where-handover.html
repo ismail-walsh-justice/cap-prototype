@@ -6,7 +6,7 @@
   <title>Where does handover take place? – Design 2</title>
   <link rel="stylesheet" href="../assets/govuk-frontend.min.css">
 </head>
-<body class="govuk-template__body">
+<body class="govuk-template__body"><script>document.body.className += ' js-enabled'</script>
 
 <header class="govuk-header" data-module="govuk-header">
   <div class="govuk-header__container govuk-width-container">
@@ -117,15 +117,14 @@
             </div>
           </div>
 
-          <button class="govuk-button" data-module="govuk-button" id="continue-btn">
-            Continue
-          </button>
+          <div class="govuk-button-group">
+            <button class="govuk-button" data-module="govuk-button" id="continue-btn">
+              Continue
+            </button>
+            <a class="govuk-link" href="#" id="skip-link">We do not need to decide where handover takes place</a>
+          </div>
 
         </form>
-
-        <p class="govuk-body">
-          <a class="govuk-link" href="#" id="skip-link">We do not need to decide where handover takes place</a>
-        </p>
 
       </div>
     </div>
@@ -180,7 +179,7 @@
     ? 'get-between-households.html?child=' + lastChild
     : 'where-handover.html?child=' + (childIdx - 1);
 
-  document.getElementById('apply-all-group').style.display = 'none';
+  if (childCount >= 2) { document.getElementById('apply-all-group').style.display = 'block'; }
 
   var plan = getChildPlan(childIdx);
   var savedAnswers = (plan && plan.answers) ? plan.answers : {};
@@ -238,15 +237,29 @@
     }
 
     var selectedValues = Array.from(checked).map(function (cb) { return cb.value; });
-    navigate({
+    var updates = {
       whereHandover: selectedValues,
       whereHandoverSomeoneElse: someoneElseChecked ? someoneElseText : ''
-    });
+    };
+    var applyAll = document.getElementById('apply-to-all');
+    if (applyAll && applyAll.checked) {
+      applyAnswerToAllChildren(updates);
+      window.location.href = 'will-change-during-holidays.html?child=0';
+    } else {
+      navigate(updates);
+    }
   });
 
   document.getElementById('skip-link').addEventListener('click', function (e) {
     e.preventDefault();
-    navigate({ whereHandover: 'skip', whereHandoverSomeoneElse: '' });
+    var skipUpdates = { whereHandover: 'skip', whereHandoverSomeoneElse: '' };
+    var applyAll = document.getElementById('apply-to-all');
+    if (applyAll && applyAll.checked) {
+      applyAnswerToAllChildren(skipUpdates);
+      window.location.href = 'will-change-during-holidays.html?child=0';
+    } else {
+      navigate(skipUpdates);
+    }
   });
 })();
 </script>

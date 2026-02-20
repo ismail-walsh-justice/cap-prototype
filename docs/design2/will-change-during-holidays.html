@@ -6,7 +6,7 @@
   <title>Will these arrangements change during school holidays? – Design 2</title>
   <link rel="stylesheet" href="../assets/govuk-frontend.min.css">
 </head>
-<body class="govuk-template__body">
+<body class="govuk-template__body"><script>document.body.className += ' js-enabled'</script>
 
 <header class="govuk-header" data-module="govuk-header">
   <div class="govuk-header__container govuk-width-container">
@@ -78,15 +78,14 @@
             </div>
           </div>
 
-          <button class="govuk-button" data-module="govuk-button" id="continue-btn">
-            Continue
-          </button>
+          <div class="govuk-button-group">
+            <button class="govuk-button" data-module="govuk-button" id="continue-btn">
+              Continue
+            </button>
+            <a class="govuk-link" href="#" id="skip-link">We do not need to decide how arrangements change during school holidays</a>
+          </div>
 
         </form>
-
-        <p class="govuk-body">
-          <a class="govuk-link" href="#" id="skip-link">We do not need to decide how arrangements change during school holidays</a>
-        </p>
 
       </div>
     </div>
@@ -144,7 +143,7 @@
       : 'will-change-during-holidays.html?child=' + (childIdx - 1);
   }
 
-  document.getElementById('apply-all-group').style.display = 'none';
+  if (childCount >= 2) { document.getElementById('apply-all-group').style.display = 'block'; }
 
   var plan = getChildPlan(childIdx);
   var savedAnswers = (plan && plan.answers) ? plan.answers : {};
@@ -171,24 +170,40 @@
     var answer = selectedRadio.value;
     var updates = { willChangeDuringHolidays: answer };
     if (answer === 'No') updates.howChangeDuringHolidays = 'skip';
-    setChildPlan(childIdx, { answers: updates });
-
-    if (answer === 'Yes') {
-      window.location.href = 'how-change-during-holidays.html?child=' + childIdx;
-    } else if (childIdx < lastChild) {
-      window.location.href = 'will-change-during-holidays.html?child=' + (childIdx + 1);
+    var applyAll = document.getElementById('apply-to-all');
+    if (applyAll && applyAll.checked) {
+      applyAnswerToAllChildren(updates);
+      if (answer === 'Yes') {
+        window.location.href = 'how-change-during-holidays.html?child=0';
+      } else {
+        window.location.href = 'items-for-changeover.html?child=0';
+      }
     } else {
-      window.location.href = 'items-for-changeover.html?child=0';
+      setChildPlan(childIdx, { answers: updates });
+      if (answer === 'Yes') {
+        window.location.href = 'how-change-during-holidays.html?child=' + childIdx;
+      } else if (childIdx < lastChild) {
+        window.location.href = 'will-change-during-holidays.html?child=' + (childIdx + 1);
+      } else {
+        window.location.href = 'items-for-changeover.html?child=0';
+      }
     }
   });
 
   document.getElementById('skip-link').addEventListener('click', function (e) {
     e.preventDefault();
-    setChildPlan(childIdx, { answers: { willChangeDuringHolidays: 'skip', howChangeDuringHolidays: 'skip' } });
-    if (childIdx < lastChild) {
-      window.location.href = 'will-change-during-holidays.html?child=' + (childIdx + 1);
-    } else {
+    var skipUpdates = { willChangeDuringHolidays: 'skip', howChangeDuringHolidays: 'skip' };
+    var applyAll = document.getElementById('apply-to-all');
+    if (applyAll && applyAll.checked) {
+      applyAnswerToAllChildren(skipUpdates);
       window.location.href = 'items-for-changeover.html?child=0';
+    } else {
+      setChildPlan(childIdx, { answers: skipUpdates });
+      if (childIdx < lastChild) {
+        window.location.href = 'will-change-during-holidays.html?child=' + (childIdx + 1);
+      } else {
+        window.location.href = 'items-for-changeover.html?child=0';
+      }
     }
   });
 })();

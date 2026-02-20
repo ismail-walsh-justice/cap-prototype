@@ -8,6 +8,11 @@
 </head>
 <body class="govuk-template__body">
   <script>document.body.className += ' js-enabled'</script>
+  <script>
+    if (sessionStorage.getItem('cap-hh-prototype-auth') !== 'true') {
+      window.location.replace('password.html?returnURL=' + encodeURIComponent(window.location.href));
+    }
+  </script>
   <a href="#main-content" class="govuk-skip-link" data-module="govuk-skip-link">Skip to main content</a>
 
   <header class="govuk-header" data-module="govuk-header">
