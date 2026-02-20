@@ -168,7 +168,18 @@
   } else {
     headingEl.textContent = 'Where does handover take place?';
     backLink.href = 'get-between-households.html';
-    if (childCount >= 2) document.getElementById('section-per-child-option').style.display = '';
+    if (childCount >= 2) {
+      document.getElementById('section-per-child-option').style.display = '';
+      var specifyRadioEl = document.getElementById('specify-per-child');
+      document.querySelectorAll('input[name="whereHandover"]').forEach(function(cb) {
+        cb.addEventListener('change', function() { if (cb.checked) specifyRadioEl.checked = false; });
+      });
+      specifyRadioEl.addEventListener('change', function() {
+        document.querySelectorAll('input[name="whereHandover"]').forEach(function(cb) { cb.checked = false; });
+        var cond = document.getElementById('conditional-someoneElse');
+        if (cond) cond.classList.add('govuk-checkboxes__conditional--hidden');
+      });
+    }
 
     var q = getD3Question('whereHandover');
     if (q.mode === 'all' && q.allAnswer) {

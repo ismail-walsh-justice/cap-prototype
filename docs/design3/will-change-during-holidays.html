@@ -141,7 +141,16 @@
   } else {
     headingEl.textContent = 'Will these arrangements change during school holidays?';
     backLink.href = 'where-handover.html';
-    if (childCount >= 2) document.getElementById('section-per-child-option').style.display = '';
+    if (childCount >= 2) {
+      document.getElementById('section-per-child-option').style.display = '';
+      var specifyRadioEl = document.getElementById('specify-per-child');
+      document.querySelectorAll('input[name="willChangeDuringHolidays"]').forEach(function(r) {
+        r.addEventListener('change', function() { specifyRadioEl.checked = false; });
+      });
+      specifyRadioEl.addEventListener('change', function() {
+        document.querySelectorAll('input[name="willChangeDuringHolidays"]').forEach(function(r) { r.checked = false; });
+      });
+    }
 
     var q = getD3Question('willChangeDuringHolidays');
     if (q.mode === 'all' && q.allAnswer && q.allAnswer.answer !== 'skip') {

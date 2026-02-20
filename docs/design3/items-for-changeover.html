@@ -119,7 +119,17 @@
     if (saved.text && saved.text !== 'skip') document.getElementById('items-text').value = saved.text;
   } else {
     headingEl.textContent = 'What items need to go between households?';
-    if (childCount >= 2) document.getElementById('section-per-child-option').style.display = '';
+    if (childCount >= 2) {
+      document.getElementById('section-per-child-option').style.display = '';
+      var specifyRadioEl = document.getElementById('specify-per-child');
+      var itemsTextarea = document.getElementById('items-text');
+      itemsTextarea.addEventListener('input', function() {
+        if (itemsTextarea.value.trim()) specifyRadioEl.checked = false;
+      });
+      specifyRadioEl.addEventListener('change', function() {
+        if (specifyRadioEl.checked) itemsTextarea.value = '';
+      });
+    }
 
     // Back: check Q3 all answer
     var q3 = getD3Question('willChangeDuringHolidays');

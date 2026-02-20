@@ -159,9 +159,20 @@
     headingEl.textContent = 'How will the children get between households?';
     document.getElementById('label-parent1Collects').textContent = escHtml(parent1Name) + ' collects the children';
     document.getElementById('label-parent2Collects').textContent = escHtml(parent2Name) + ' collects the children';
-    backLink.href = '../index.html';
+    backLink.href = '../parents.html?design=3';
 
-    if (childCount >= 2) document.getElementById('section-per-child-option').style.display = '';
+    if (childCount >= 2) {
+      document.getElementById('section-per-child-option').style.display = '';
+      var specifyRadioEl = document.getElementById('specify-per-child');
+      document.querySelectorAll('input[name="getBetweenHouseholds"]').forEach(function(r) {
+        r.addEventListener('change', function() { specifyRadioEl.checked = false; });
+      });
+      specifyRadioEl.addEventListener('change', function() {
+        document.querySelectorAll('input[name="getBetweenHouseholds"]').forEach(function(r) { r.checked = false; });
+        var cond = document.getElementById('conditional-other');
+        if (cond) cond.classList.add('govuk-radios__conditional--hidden');
+      });
+    }
 
     var q = getD3Question('getBetweenHouseholds');
     if (q.mode === 'all' && q.allAnswer) {
