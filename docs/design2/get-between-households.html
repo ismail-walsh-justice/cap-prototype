@@ -134,35 +134,33 @@
 (function () {
   function escHtml(str) {
     if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
 
-  var childIdx = getCurrentChildIndex();
+  var params = new URLSearchParams(window.location.search);
+  var childIdx = parseInt(params.get('child') || '0', 10);
   var names = getNames();
-  var childName = (names.children && names.children[childIdx]) ? names.children[childIdx] : 'the child';
+  var children = names.children || [];
+  var lastChild = children.length - 1;
+  var childCount = children.length;
+  var childName = children[childIdx] || 'the child';
   var parent1Name = names.parent1 || 'Parent 1';
   var parent2Name = names.parent2 || 'Parent 2';
-  var childCount = (names.children && names.children.length) ? names.children.length : 1;
 
-  // Set caption and heading
-  document.getElementById('page-caption').textContent = escHtml(childName) + ' \u2013 Question 1 of 5';
+  var captionEl = document.getElementById('page-caption');
+  captionEl.textContent = childCount > 1
+    ? 'Child ' + (childIdx + 1) + ' of ' + childCount + ' – Question 1 of 5'
+    : 'Question 1 of 5';
+
   document.getElementById('page-heading').textContent = 'How will ' + escHtml(childName) + ' get between households?';
-
-  // Set radio labels with real names
   document.getElementById('label-parent1Collects').textContent = escHtml(parent1Name) + ' collects ' + escHtml(childName);
   document.getElementById('label-parent2Collects').textContent = escHtml(parent2Name) + ' collects ' + escHtml(childName);
 
-  // Show "apply to all" only if 2+ children
-  if (childCount > 1) {
-    document.getElementById('apply-all-group').style.display = '';
-  }
+  var backLink = document.getElementById('back-link');
+  backLink.href = childIdx === 0 ? 'task-list.html' : 'get-between-households.html?child=' + (childIdx - 1);
 
-  // Pre-populate from saved state
+  document.getElementById('apply-all-group').style.display = 'none';
+
   var plan = getChildPlan(childIdx);
   var savedAnswers = (plan && plan.answers) ? plan.answers : {};
   if (savedAnswers.getBetweenHouseholds) {
@@ -171,8 +169,8 @@
     if (radio) {
       radio.checked = true;
       if (val === 'other') {
-        var conditional = document.getElementById('conditional-other');
-        if (conditional) conditional.classList.remove('govuk-radios__conditional--hidden');
+        var cond = document.getElementById('conditional-other');
+        if (cond) cond.classList.remove('govuk-radios__conditional--hidden');
       }
     }
   }
@@ -180,19 +178,24 @@
     document.getElementById('other-text').value = savedAnswers.getBetweenHouseholdsOther;
   }
 
-  // Validation and submit
+  function navigate(updates) {
+    setChildPlan(childIdx, { answers: updates });
+    if (childIdx < lastChild) {
+      window.location.href = 'get-between-households.html?child=' + (childIdx + 1);
+    } else {
+      window.location.href = 'where-handover.html?child=0';
+    }
+  }
+
   document.getElementById('continue-btn').addEventListener('click', function (e) {
     e.preventDefault();
-
     var selectedRadio = document.querySelector('input[name="getBetweenHouseholds"]:checked');
     var radioGroup = document.getElementById('form-group-radio');
     var radioError = document.getElementById('radio-error');
     var otherTextGroup = document.getElementById('form-group-other-text');
     var otherTextError = document.getElementById('other-text-error');
     var otherText = document.getElementById('other-text').value.trim();
-    var valid = true;
 
-    // Reset errors
     radioGroup.classList.remove('govuk-form-group--error');
     radioError.style.display = 'none';
     otherTextGroup.classList.remove('govuk-form-group--error');
@@ -202,46 +205,23 @@
     if (!selectedRadio) {
       radioGroup.classList.add('govuk-form-group--error');
       radioError.style.display = '';
-      valid = false;
-    } else if (selectedRadio.value === 'other' && !otherText) {
+      return;
+    }
+    if (selectedRadio.value === 'other' && !otherText) {
       otherTextGroup.classList.add('govuk-form-group--error');
       otherTextError.style.display = '';
       document.getElementById('other-text').classList.add('govuk-textarea--error');
-      valid = false;
+      return;
     }
 
-    if (!valid) return;
-
-    var answerUpdates = {
-      getBetweenHouseholds: selectedRadio.value
-    };
-    if (selectedRadio.value === 'other') {
-      answerUpdates.getBetweenHouseholdsOther = otherText;
-    } else {
-      answerUpdates.getBetweenHouseholdsOther = '';
-    }
-
-    var applyToAll = document.getElementById('apply-to-all');
-    if (applyToAll && applyToAll.checked) {
-      applyAnswerToAllChildren(answerUpdates);
-    } else {
-      setChildPlan(childIdx, { answers: answerUpdates });
-    }
-
-    window.location.href = 'where-handover.html';
+    var updates = { getBetweenHouseholds: selectedRadio.value };
+    updates.getBetweenHouseholdsOther = selectedRadio.value === 'other' ? otherText : '';
+    navigate(updates);
   });
 
-  // Skip link
   document.getElementById('skip-link').addEventListener('click', function (e) {
     e.preventDefault();
-    var answerUpdates = { getBetweenHouseholds: 'skip', getBetweenHouseholdsOther: '' };
-    var applyToAll = document.getElementById('apply-to-all');
-    if (applyToAll && applyToAll.checked) {
-      applyAnswerToAllChildren(answerUpdates);
-    } else {
-      setChildPlan(childIdx, { answers: answerUpdates });
-    }
-    window.location.href = 'where-handover.html';
+    navigate({ getBetweenHouseholds: 'skip', getBetweenHouseholdsOther: '' });
   });
 })();
 </script>

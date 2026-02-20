@@ -32,65 +32,36 @@
     </p>
   </div>
 
-  <a href="will-change-during-holidays.html" class="govuk-back-link">Back</a>
+  <a href="#" class="govuk-back-link" id="back-link">Back</a>
 
   <main class="govuk-main-wrapper" id="main-content">
     <div class="govuk-grid-row">
       <div class="govuk-grid-column-two-thirds">
-
-        <h1 class="govuk-heading-l">How will the arrangements change during school holidays?</h1>
-
-        <!-- Error summary -->
-        <div class="govuk-error-summary" id="error-summary" style="display:none;" data-module="govuk-error-summary">
-          <div role="alert">
-            <h2 class="govuk-error-summary__title">There is a problem</h2>
-            <div class="govuk-error-summary__body">
-              <ul class="govuk-list govuk-error-summary__list" id="error-list"></ul>
-            </div>
-          </div>
-        </div>
-
-        <!-- Section A: All children answer -->
-        <div id="section-all">
-          <p class="govuk-body govuk-!-font-weight-bold" id="for-all-label" style="display:none;">For all children:</p>
-          <div class="govuk-form-group" id="form-group-all">
-            <label class="govuk-label govuk-visually-hidden" for="all-how-change">Describe how the arrangements will change</label>
-            <div id="all-error" class="govuk-error-message" style="display:none;">
-              <span class="govuk-visually-hidden">Error:</span>
-              Enter details of how the arrangements will change during school holidays
-            </div>
-            <textarea class="govuk-textarea" id="all-how-change" name="all-how-change" rows="6"
-              placeholder="For example: during summer holidays the children will spend 3 weeks with each parent"></textarea>
-          </div>
-        </div>
-
-        <!-- Section B: Specify per child option -->
-        <div id="section-per-child-option" style="display:none;">
-          <p class="govuk-body">Or</p>
-          <div class="govuk-radios" data-module="govuk-radios">
-            <div class="govuk-radios__item">
-              <input class="govuk-radios__input" id="specify-per-child" name="specify-mode" type="radio" value="perChild">
-              <label class="govuk-label govuk-radios__label" for="specify-per-child">
-                Specify an answer for each child separately
+        <form id="page-form" novalidate>
+          <div class="govuk-form-group" id="form-group-textarea">
+            <h1 class="govuk-label-wrapper">
+              <span class="govuk-caption-l" id="page-caption"></span>
+              <label class="govuk-label govuk-label--l" for="how-change-text" id="page-heading">
+                How will the arrangements be different in school holidays?
               </label>
+            </h1>
+            <div class="govuk-hint">School holidays include half terms, bank holidays and inset days.</div>
+            <div id="textarea-error" class="govuk-error-message" style="display:none;">
+              <span class="govuk-visually-hidden">Error:</span>Enter details of how arrangements will be different during school holidays
             </div>
+            <textarea class="govuk-textarea" id="how-change-text" name="how-change-text" rows="6"></textarea>
           </div>
-        </div>
 
-        <!-- Section C: Per-child answers -->
-        <div id="section-per-child" style="display:none;">
-          <a href="#" class="govuk-link govuk-!-display-block govuk-!-margin-bottom-4" id="back-to-all-link">&lt; Go back to answering for all children</a>
-          <div id="per-child-blocks"></div>
-        </div>
-
-        <div class="govuk-button-group" id="button-group">
-          <button class="govuk-button" data-module="govuk-button" id="continue-btn">Continue</button>
-          <a class="govuk-link" href="#" id="skip-link">We do not need to decide this</a>
-        </div>
-
+          <div class="govuk-button-group">
+            <button class="govuk-button" data-module="govuk-button" id="continue-btn">Continue</button>
+          </div>
+        </form>
+        <p class="govuk-body">
+          <a class="govuk-link" href="#" id="skip-link">We do not need to decide how arrangements change during school holidays</a>
+        </p>
       </div>
     </div>
-  </main>
+</main>
 </div>
 
 <footer class="govuk-footer">
@@ -114,147 +85,90 @@
 (function () {
   function escHtml(str) {
     if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
 
+  var params = new URLSearchParams(window.location.search);
+  var isPerChild = params.get('perchild') === '1';
+  var childIdx = parseInt(params.get('child') || '0', 10);
   var names = getNames();
   var children = names.children || [];
+  var lastChild = children.length - 1;
   var childCount = children.length;
+  var childName = children[childIdx] || 'the child';
 
-  // Show "For all children" label and per-child option only if 2+ children
-  if (childCount >= 2) {
-    document.getElementById('for-all-label').style.display = '';
-    document.getElementById('section-per-child-option').style.display = '';
-  }
+  var captionEl = document.getElementById('page-caption');
+  var headingEl = document.getElementById('page-heading');
+  var backLink = document.getElementById('back-link');
 
-  // Build per-child blocks
-  var perChildBlocksEl = document.getElementById('per-child-blocks');
-  children.forEach(function (childName, i) {
-    var block = document.createElement('div');
-    block.className = 'govuk-!-margin-bottom-6';
-    block.id = 'child-block-' + i;
-    block.innerHTML =
-      '<p class="govuk-body govuk-!-font-weight-bold">For ' + escHtml(childName) + ':</p>' +
-      '<div class="govuk-form-group" id="form-group-child-' + i + '">' +
-        '<label class="govuk-label govuk-visually-hidden" for="child-' + i + '-how-change">Describe how the arrangements will change for ' + escHtml(childName) + '</label>' +
-        '<div id="child-' + i + '-error" class="govuk-error-message" style="display:none;">' +
-          '<span class="govuk-visually-hidden">Error:</span>' +
-          'Enter details for ' + escHtml(childName) +
-        '</div>' +
-        '<textarea class="govuk-textarea" id="child-' + i + '-how-change" name="child-' + i + '-how-change" rows="5" ' +
-          'placeholder="For example: during summer holidays ' + escHtml(childName) + ' will spend 3 weeks with each parent"></textarea>' +
-      '</div>';
-    perChildBlocksEl.appendChild(block);
-  });
+  if (isPerChild) {
+    if (childCount > 1) captionEl.textContent = 'Child ' + (childIdx + 1) + ' of ' + childCount;
+    headingEl.textContent = 'How will ' + escHtml(childName) + '\u2019s arrangements be different in school holidays?';
+    backLink.href = 'will-change-during-holidays.html?perchild=1&child=' + childIdx;
 
-  // Restore saved state
-  var d3 = getDesign3();
-  var saved = d3.howChangeDuringHolidays || {};
-
-  if (saved.mode === 'perChild' && childCount >= 2) {
-    switchToPerChild();
-    var perChildData = saved.perChild || [];
-    children.forEach(function (_, i) {
-      var childData = perChildData[i] || {};
-      var ta = document.getElementById('child-' + i + '-how-change');
-      if (ta && childData.answer) ta.value = childData.answer;
-    });
+    var q = getD3Question('howChangeDuringHolidays');
+    var saved = ((q.perChildAnswers || [])[childIdx]) || {};
+    if (saved.text && saved.text !== 'skip') document.getElementById('how-change-text').value = saved.text;
   } else {
-    if (saved.allAnswer && saved.allAnswer !== 'skip') {
-      document.getElementById('all-how-change').value = saved.allAnswer;
+    headingEl.textContent = 'How will the arrangements be different in school holidays?';
+    backLink.href = 'will-change-during-holidays.html';
+
+    var q = getD3Question('howChangeDuringHolidays');
+    if (q.mode === 'all' && q.allAnswer && q.allAnswer.text !== 'skip') {
+      document.getElementById('how-change-text').value = q.allAnswer.text || '';
     }
   }
 
-  function switchToPerChild() {
-    document.getElementById('section-all').style.display = 'none';
-    document.getElementById('section-per-child-option').style.display = 'none';
-    document.getElementById('section-per-child').style.display = '';
-  }
-
-  function switchToAll() {
-    document.getElementById('section-all').style.display = '';
-    if (childCount >= 2) {
-      document.getElementById('section-per-child-option').style.display = '';
+  function afterSave() {
+    if (isPerChild) {
+      // Go to Q3 for next child, or Q5 if last child
+      if (childIdx < lastChild) {
+        window.location.href = 'will-change-during-holidays.html?perchild=1&child=' + (childIdx + 1);
+      } else {
+        window.location.href = 'items-for-changeover.html';
+      }
+    } else {
+      window.location.href = 'items-for-changeover.html';
     }
-    document.getElementById('section-per-child').style.display = 'none';
-    var specifyRadio = document.getElementById('specify-per-child');
-    if (specifyRadio) specifyRadio.checked = false;
   }
-
-  var specifyRadio = document.getElementById('specify-per-child');
-  if (specifyRadio) {
-    specifyRadio.addEventListener('change', function () {
-      if (this.checked) switchToPerChild();
-    });
-  }
-
-  document.getElementById('back-to-all-link').addEventListener('click', function (e) {
-    e.preventDefault();
-    switchToAll();
-  });
 
   document.getElementById('continue-btn').addEventListener('click', function (e) {
     e.preventDefault();
-    clearErrors();
+    var text = document.getElementById('how-change-text').value.trim();
+    var formGroup = document.getElementById('form-group-textarea');
+    var textareaError = document.getElementById('textarea-error');
+    var textarea = document.getElementById('how-change-text');
 
-    var isPerChild = document.getElementById('section-per-child').style.display !== 'none';
-    var valid = true;
+    formGroup.classList.remove('govuk-form-group--error');
+    textareaError.style.display = 'none';
+    textarea.classList.remove('govuk-textarea--error');
 
-    if (isPerChild) {
-      var perChildData = [];
-      children.forEach(function (childName, i) {
-        var ta = document.getElementById('child-' + i + '-how-change');
-        var val = ta ? ta.value.trim() : '';
-        if (!val) {
-          showFieldError('form-group-child-' + i, 'child-' + i + '-error');
-          valid = false;
-        }
-        perChildData.push({ answer: val });
-      });
-      if (!valid) { showErrorSummary(); return; }
-      setDesign3({ howChangeDuringHolidays: { mode: 'perChild', perChild: perChildData } });
-    } else {
-      var val = document.getElementById('all-how-change').value.trim();
-      if (!val) {
-        showFieldError('form-group-all', 'all-error');
-        valid = false;
-      }
-      if (!valid) { showErrorSummary(); return; }
-      setDesign3({ howChangeDuringHolidays: { mode: 'all', allAnswer: val } });
+    if (!text) {
+      formGroup.classList.add('govuk-form-group--error');
+      textareaError.style.display = '';
+      textarea.classList.add('govuk-textarea--error');
+      return;
     }
 
-    window.location.href = 'items-for-changeover.html';
+    var answer = { text: text };
+    if (isPerChild) {
+      setD3PerChildAnswer('howChangeDuringHolidays', childIdx, answer);
+    } else {
+      setD3AllAnswer('howChangeDuringHolidays', answer);
+    }
+    afterSave();
   });
 
   document.getElementById('skip-link').addEventListener('click', function (e) {
     e.preventDefault();
-    setDesign3({ howChangeDuringHolidays: { mode: 'all', allAnswer: 'skip' } });
-    window.location.href = 'items-for-changeover.html';
+    var skipAnswer = { text: 'skip' };
+    if (isPerChild) {
+      setD3PerChildAnswer('howChangeDuringHolidays', childIdx, skipAnswer);
+    } else {
+      setD3AllAnswer('howChangeDuringHolidays', skipAnswer);
+    }
+    afterSave();
   });
-
-  function showFieldError(formGroupId, errorId) {
-    var fg = document.getElementById(formGroupId);
-    var err = document.getElementById(errorId);
-    if (fg) fg.classList.add('govuk-form-group--error');
-    if (err) err.style.display = '';
-  }
-
-  function clearErrors() {
-    document.querySelectorAll('.govuk-form-group--error').forEach(function (el) { el.classList.remove('govuk-form-group--error'); });
-    document.querySelectorAll('.govuk-error-message').forEach(function (el) { el.style.display = 'none'; });
-    document.getElementById('error-summary').style.display = 'none';
-  }
-
-  function showErrorSummary() {
-    var summary = document.getElementById('error-summary');
-    summary.style.display = '';
-    summary.scrollIntoView();
-  }
 })();
 </script>
 </body>

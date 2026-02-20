@@ -25,7 +25,7 @@
 </header>
 
 <div class="govuk-width-container">
-  <a href="where-handover.html" class="govuk-back-link">Back</a>
+  <a href="#" class="govuk-back-link" id="back-link">Back</a>
 
   <main class="govuk-main-wrapper" id="main-content">
     <div class="govuk-grid-row">
@@ -114,27 +114,38 @@
 (function () {
   function escHtml(str) {
     if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
 
-  var childIdx = getCurrentChildIndex();
+  var params = new URLSearchParams(window.location.search);
+  var childIdx = parseInt(params.get('child') || '0', 10);
   var names = getNames();
-  var childName = (names.children && names.children[childIdx]) ? names.children[childIdx] : 'the child';
-  var childCount = (names.children && names.children.length) ? names.children.length : 1;
+  var children = names.children || [];
+  var lastChild = children.length - 1;
+  var childCount = children.length;
+  var childName = children[childIdx] || 'the child';
 
-  document.getElementById('page-caption').textContent = escHtml(childName) + ' \u2013 Question 3 of 5';
-  document.getElementById('page-heading').textContent = 'Will ' + escHtml(childName) + '\u2019s arrangements change during school holidays?';
+  var captionEl = document.getElementById('page-caption');
+  captionEl.textContent = childCount > 1
+    ? 'Child ' + (childIdx + 1) + ' of ' + childCount + ' – Question 3 of 5'
+    : 'Question 3 of 5';
 
-  if (childCount > 1) {
-    document.getElementById('apply-all-group').style.display = '';
+  document.getElementById('page-heading').textContent = 'Will ' + escHtml(childName) + '’s arrangements change during school holidays?';
+
+  // Back link: child=0 → Q2?child=lastChild; else → check if prev child said Yes to Q3
+  var backLink = document.getElementById('back-link');
+  if (childIdx === 0) {
+    backLink.href = 'where-handover.html?child=' + lastChild;
+  } else {
+    var prevPlan = getChildPlan(childIdx - 1);
+    var prevAnswers = (prevPlan && prevPlan.answers) ? prevPlan.answers : {};
+    backLink.href = prevAnswers.willChangeDuringHolidays === 'Yes'
+      ? 'how-change-during-holidays.html?child=' + (childIdx - 1)
+      : 'will-change-during-holidays.html?child=' + (childIdx - 1);
   }
 
-  // Pre-populate
+  document.getElementById('apply-all-group').style.display = 'none';
+
   var plan = getChildPlan(childIdx);
   var savedAnswers = (plan && plan.answers) ? plan.answers : {};
   if (savedAnswers.willChangeDuringHolidays && savedAnswers.willChangeDuringHolidays !== 'skip') {
@@ -144,11 +155,9 @@
 
   document.getElementById('continue-btn').addEventListener('click', function (e) {
     e.preventDefault();
-
     var selectedRadio = document.querySelector('input[name="willChangeDuringHolidays"]:checked');
     var radioGroup = document.getElementById('form-group-radio');
     var radioError = document.getElementById('radio-error');
-    var valid = true;
 
     radioGroup.classList.remove('govuk-form-group--error');
     radioError.style.display = 'none';
@@ -156,46 +165,31 @@
     if (!selectedRadio) {
       radioGroup.classList.add('govuk-form-group--error');
       radioError.style.display = '';
-      valid = false;
+      return;
     }
-
-    if (!valid) return;
 
     var answer = selectedRadio.value;
-    var answerUpdates = { willChangeDuringHolidays: answer };
-
-    // If No, also skip Q4
-    if (answer === 'No') {
-      answerUpdates.howChangeDuringHolidays = 'skip';
-    }
-
-    var applyToAll = document.getElementById('apply-to-all');
-    if (applyToAll && applyToAll.checked) {
-      applyAnswerToAllChildren(answerUpdates);
-    } else {
-      setChildPlan(childIdx, { answers: answerUpdates });
-    }
+    var updates = { willChangeDuringHolidays: answer };
+    if (answer === 'No') updates.howChangeDuringHolidays = 'skip';
+    setChildPlan(childIdx, { answers: updates });
 
     if (answer === 'Yes') {
-      window.location.href = 'how-change-during-holidays.html';
+      window.location.href = 'how-change-during-holidays.html?child=' + childIdx;
+    } else if (childIdx < lastChild) {
+      window.location.href = 'will-change-during-holidays.html?child=' + (childIdx + 1);
     } else {
-      window.location.href = 'items-for-changeover.html';
+      window.location.href = 'items-for-changeover.html?child=0';
     }
   });
 
   document.getElementById('skip-link').addEventListener('click', function (e) {
     e.preventDefault();
-    var answerUpdates = {
-      willChangeDuringHolidays: 'skip',
-      howChangeDuringHolidays: 'skip'
-    };
-    var applyToAll = document.getElementById('apply-to-all');
-    if (applyToAll && applyToAll.checked) {
-      applyAnswerToAllChildren(answerUpdates);
+    setChildPlan(childIdx, { answers: { willChangeDuringHolidays: 'skip', howChangeDuringHolidays: 'skip' } });
+    if (childIdx < lastChild) {
+      window.location.href = 'will-change-during-holidays.html?child=' + (childIdx + 1);
     } else {
-      setChildPlan(childIdx, { answers: answerUpdates });
+      window.location.href = 'items-for-changeover.html?child=0';
     }
-    window.location.href = 'items-for-changeover.html';
   });
 })();
 </script>

@@ -32,98 +32,77 @@
     </p>
   </div>
 
-  <a href="get-between-households.html" class="govuk-back-link">Back</a>
+  <a href="#" class="govuk-back-link" id="back-link">Back</a>
 
   <main class="govuk-main-wrapper" id="main-content">
     <div class="govuk-grid-row">
       <div class="govuk-grid-column-two-thirds">
-
-        <h1 class="govuk-heading-l">Where will the handover take place?</h1>
-        <p class="govuk-body">Select all that apply.</p>
-
-        <!-- Error summary -->
-        <div class="govuk-error-summary" id="error-summary" style="display:none;" data-module="govuk-error-summary">
-          <div role="alert">
-            <h2 class="govuk-error-summary__title">There is a problem</h2>
-            <div class="govuk-error-summary__body">
-              <ul class="govuk-list govuk-error-summary__list" id="error-list"></ul>
-            </div>
-          </div>
-        </div>
-
-        <!-- Section A: All children answer -->
-        <div id="section-all">
-          <p class="govuk-body govuk-!-font-weight-bold" id="for-all-label" style="display:none;">For all children:</p>
-          <div class="govuk-form-group" id="form-group-all">
+        <form id="page-form" novalidate>
+          <div class="govuk-form-group" id="form-group-checkboxes">
             <fieldset class="govuk-fieldset">
-              <legend class="govuk-fieldset__legend govuk-visually-hidden">Where will the handover take place?</legend>
-              <div id="all-error" class="govuk-error-message" style="display:none;">
-                <span class="govuk-visually-hidden">Error:</span>
-                Select where the handover will take place
+              <legend class="govuk-fieldset__legend govuk-fieldset__legend--l">
+                <span class="govuk-caption-l" id="page-caption"></span>
+                <h1 class="govuk-fieldset__heading" id="page-heading">Where does handover take place?</h1>
+              </legend>
+              <div class="govuk-hint">It may be easier for children if the handover takes place at a neutral location such as a park or railway station.</div>
+              <div class="govuk-hint">Select all that apply</div>
+              <div id="checkbox-error" class="govuk-error-message" style="display:none;">
+                <span class="govuk-visually-hidden">Error:</span>Select where handover takes place
               </div>
-              <div class="govuk-checkboxes" data-module="govuk-checkboxes" id="all-checkboxes">
+              <div class="govuk-checkboxes" data-module="govuk-checkboxes" id="checkbox-group">
                 <div class="govuk-checkboxes__item">
-                  <input class="govuk-checkboxes__input" id="all-parent1Home" name="all-whereHandover" type="checkbox" value="parent1Home">
-                  <label class="govuk-label govuk-checkboxes__label" for="all-parent1Home" id="all-label-parent1Home">At Parent 1's home</label>
+                  <input class="govuk-checkboxes__input" id="neutral" name="whereHandover" type="checkbox" value="neutral">
+                  <label class="govuk-label govuk-checkboxes__label" for="neutral">Neutral location</label>
                 </div>
                 <div class="govuk-checkboxes__item">
-                  <input class="govuk-checkboxes__input" id="all-parent2Home" name="all-whereHandover" type="checkbox" value="parent2Home">
-                  <label class="govuk-label govuk-checkboxes__label" for="all-parent2Home" id="all-label-parent2Home">At Parent 2's home</label>
+                  <input class="govuk-checkboxes__input" id="parent1Home" name="whereHandover" type="checkbox" value="parent1Home">
+                  <label class="govuk-label govuk-checkboxes__label" for="parent1Home" id="label-parent1Home">At Parent 1's home</label>
                 </div>
                 <div class="govuk-checkboxes__item">
-                  <input class="govuk-checkboxes__input" id="all-school" name="all-whereHandover" type="checkbox" value="school">
-                  <label class="govuk-label govuk-checkboxes__label" for="all-school">At school</label>
+                  <input class="govuk-checkboxes__input" id="parent2Home" name="whereHandover" type="checkbox" value="parent2Home">
+                  <label class="govuk-label govuk-checkboxes__label" for="parent2Home" id="label-parent2Home">At Parent 2's home</label>
                 </div>
                 <div class="govuk-checkboxes__item">
-                  <input class="govuk-checkboxes__input" id="all-neutral" name="all-whereHandover" type="checkbox" value="neutral">
-                  <label class="govuk-label govuk-checkboxes__label" for="all-neutral">At a neutral location</label>
+                  <input class="govuk-checkboxes__input" id="school" name="whereHandover" type="checkbox" value="school">
+                  <label class="govuk-label govuk-checkboxes__label" for="school">At school</label>
                 </div>
                 <div class="govuk-checkboxes__item">
-                  <input class="govuk-checkboxes__input" id="all-someoneElse" name="all-whereHandover" type="checkbox" value="someoneElse" data-aria-controls="conditional-all-someoneElse">
-                  <label class="govuk-label govuk-checkboxes__label" for="all-someoneElse">At someone else's home</label>
+                  <input class="govuk-checkboxes__input" id="someoneElse" name="whereHandover" type="checkbox" value="someoneElse" data-aria-controls="conditional-someoneElse">
+                  <label class="govuk-label govuk-checkboxes__label" for="someoneElse">Someone else will manage handover, such as a grandparent</label>
                 </div>
-                <div class="govuk-checkboxes__conditional govuk-checkboxes__conditional--hidden" id="conditional-all-someoneElse">
-                  <div class="govuk-form-group" id="form-group-all-someoneElse-text">
-                    <label class="govuk-label" for="all-someoneElse-text">Who and where?</label>
-                    <div id="all-someoneElse-text-error" class="govuk-error-message" style="display:none;">
-                      <span class="govuk-visually-hidden">Error:</span>
-                      Enter details about whose home and where
+                <div class="govuk-checkboxes__conditional govuk-checkboxes__conditional--hidden" id="conditional-someoneElse">
+                  <div class="govuk-form-group" id="form-group-someone-else">
+                    <label class="govuk-label" for="someone-else-text">Name of the person who will manage handover</label>
+                    <div id="someone-else-error" class="govuk-error-message" style="display:none;">
+                      <span class="govuk-visually-hidden">Error:</span>Enter the name of the person who will manage handover
                     </div>
-                    <textarea class="govuk-textarea" id="all-someoneElse-text" name="all-someoneElse-text" rows="3"></textarea>
+                    <input class="govuk-input" id="someone-else-text" name="someone-else-text" type="text">
                   </div>
                 </div>
               </div>
             </fieldset>
           </div>
-        </div>
 
-        <!-- Section B: Specify per child option -->
-        <div id="section-per-child-option" style="display:none;">
-          <p class="govuk-body">Or</p>
-          <div class="govuk-radios" data-module="govuk-radios">
-            <div class="govuk-radios__item">
-              <input class="govuk-radios__input" id="specify-per-child" name="specify-mode" type="radio" value="perChild">
-              <label class="govuk-label govuk-radios__label" for="specify-per-child">
-                Specify an answer for each child separately
-              </label>
+          <div id="section-per-child-option" style="display:none;" class="govuk-!-margin-top-4">
+            <p class="govuk-body">Or</p>
+            <div class="govuk-radios" data-module="govuk-radios">
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="specify-per-child" name="specify-mode" type="radio" value="perChild">
+                <label class="govuk-label govuk-radios__label" for="specify-per-child">Specify an answer for each child separately</label>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Section C: Per-child answers -->
-        <div id="section-per-child" style="display:none;">
-          <a href="#" class="govuk-link govuk-!-display-block govuk-!-margin-bottom-4" id="back-to-all-link">&lt; Go back to answering for all children</a>
-          <div id="per-child-blocks"></div>
-        </div>
-
-        <div class="govuk-button-group" id="button-group">
-          <button class="govuk-button" data-module="govuk-button" id="continue-btn">Continue</button>
-          <a class="govuk-link" href="#" id="skip-link">We do not need to decide this</a>
-        </div>
-
+          <div class="govuk-button-group govuk-!-margin-top-6">
+            <button class="govuk-button" data-module="govuk-button" id="continue-btn">Continue</button>
+          </div>
+        </form>
+        <p class="govuk-body">
+          <a class="govuk-link" href="#" id="skip-link">We do not need to decide where handover takes place</a>
+        </p>
       </div>
     </div>
-  </main>
+</main>
 </div>
 
 <footer class="govuk-footer">
@@ -147,242 +126,128 @@
 (function () {
   function escHtml(str) {
     if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
 
+  var params = new URLSearchParams(window.location.search);
+  var isPerChild = params.get('perchild') === '1';
+  var childIdx = parseInt(params.get('child') || '0', 10);
   var names = getNames();
   var children = names.children || [];
+  var lastChild = children.length - 1;
   var childCount = children.length;
+  var childName = children[childIdx] || 'the child';
   var parent1Name = names.parent1 || 'Parent 1';
   var parent2Name = names.parent2 || 'Parent 2';
 
-  // Update labels with real parent names
-  document.getElementById('all-label-parent1Home').textContent = 'At ' + escHtml(parent1Name) + '\'s home';
-  document.getElementById('all-label-parent2Home').textContent = 'At ' + escHtml(parent2Name) + '\'s home';
+  var captionEl = document.getElementById('page-caption');
+  var headingEl = document.getElementById('page-heading');
+  var backLink = document.getElementById('back-link');
 
-  // Show "For all children" label and per-child option only if 2+ children
-  if (childCount >= 2) {
-    document.getElementById('for-all-label').style.display = '';
-    document.getElementById('section-per-child-option').style.display = '';
-  }
+  document.getElementById('label-parent1Home').textContent = 'At ' + escHtml(parent1Name) + '\u2019s home';
+  document.getElementById('label-parent2Home').textContent = 'At ' + escHtml(parent2Name) + '\u2019s home';
 
-  // Checkbox values used throughout
-  var checkboxValues = ['parent1Home', 'parent2Home', 'school', 'neutral', 'someoneElse'];
+  if (isPerChild) {
+    if (childCount > 1) captionEl.textContent = 'Child ' + (childIdx + 1) + ' of ' + childCount;
+    headingEl.textContent = 'Where does handover take place for ' + escHtml(childName) + '?';
+    backLink.href = childIdx === 0 ? 'where-handover.html' : 'where-handover.html?perchild=1&child=' + (childIdx - 1);
 
-  // Build per-child blocks
-  var perChildBlocksEl = document.getElementById('per-child-blocks');
-  children.forEach(function (childName, i) {
-    var block = document.createElement('div');
-    block.className = 'govuk-!-margin-bottom-6';
-    block.id = 'child-block-' + i;
-    block.innerHTML =
-      '<p class="govuk-body govuk-!-font-weight-bold">For ' + escHtml(childName) + ':</p>' +
-      '<div class="govuk-form-group" id="form-group-child-' + i + '">' +
-        '<fieldset class="govuk-fieldset">' +
-          '<legend class="govuk-fieldset__legend govuk-visually-hidden">Where will handover take place for ' + escHtml(childName) + '?</legend>' +
-          '<div id="child-' + i + '-error" class="govuk-error-message" style="display:none;">' +
-            '<span class="govuk-visually-hidden">Error:</span>' +
-            'Select where the handover will take place for ' + escHtml(childName) +
-          '</div>' +
-          '<div class="govuk-checkboxes" data-module="govuk-checkboxes" id="child-' + i + '-checkboxes">' +
-            '<div class="govuk-checkboxes__item">' +
-              '<input class="govuk-checkboxes__input" id="child-' + i + '-parent1Home" name="child-' + i + '-whereHandover" type="checkbox" value="parent1Home">' +
-              '<label class="govuk-label govuk-checkboxes__label" for="child-' + i + '-parent1Home">At ' + escHtml(parent1Name) + '\'s home</label>' +
-            '</div>' +
-            '<div class="govuk-checkboxes__item">' +
-              '<input class="govuk-checkboxes__input" id="child-' + i + '-parent2Home" name="child-' + i + '-whereHandover" type="checkbox" value="parent2Home">' +
-              '<label class="govuk-label govuk-checkboxes__label" for="child-' + i + '-parent2Home">At ' + escHtml(parent2Name) + '\'s home</label>' +
-            '</div>' +
-            '<div class="govuk-checkboxes__item">' +
-              '<input class="govuk-checkboxes__input" id="child-' + i + '-school" name="child-' + i + '-whereHandover" type="checkbox" value="school">' +
-              '<label class="govuk-label govuk-checkboxes__label" for="child-' + i + '-school">At school</label>' +
-            '</div>' +
-            '<div class="govuk-checkboxes__item">' +
-              '<input class="govuk-checkboxes__input" id="child-' + i + '-neutral" name="child-' + i + '-whereHandover" type="checkbox" value="neutral">' +
-              '<label class="govuk-label govuk-checkboxes__label" for="child-' + i + '-neutral">At a neutral location</label>' +
-            '</div>' +
-            '<div class="govuk-checkboxes__item">' +
-              '<input class="govuk-checkboxes__input" id="child-' + i + '-someoneElse" name="child-' + i + '-whereHandover" type="checkbox" value="someoneElse" data-aria-controls="conditional-child-' + i + '-someoneElse">' +
-              '<label class="govuk-label govuk-checkboxes__label" for="child-' + i + '-someoneElse">At someone else\'s home</label>' +
-            '</div>' +
-            '<div class="govuk-checkboxes__conditional govuk-checkboxes__conditional--hidden" id="conditional-child-' + i + '-someoneElse">' +
-              '<div class="govuk-form-group" id="form-group-child-' + i + '-someoneElse-text">' +
-                '<label class="govuk-label" for="child-' + i + '-someoneElse-text">Who and where?</label>' +
-                '<div id="child-' + i + '-someoneElse-text-error" class="govuk-error-message" style="display:none;">' +
-                  '<span class="govuk-visually-hidden">Error:</span>' +
-                  'Enter details about whose home and where' +
-                '</div>' +
-                '<textarea class="govuk-textarea" id="child-' + i + '-someoneElse-text" name="child-' + i + '-someoneElse-text" rows="3"></textarea>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-        '</fieldset>' +
-      '</div>';
-    perChildBlocksEl.appendChild(block);
-  });
-
-  // Re-init GOV.UK Frontend for dynamic elements
-  if (window.GOVUKFrontend) {
-    perChildBlocksEl.querySelectorAll('[data-module="govuk-checkboxes"]').forEach(function (el) {
-      new window.GOVUKFrontend.Checkboxes(el).init();
-    });
-  }
-
-  // Helper to restore checkbox answers
-  function restoreCheckboxes(prefix, answers) {
-    if (!Array.isArray(answers)) return;
-    answers.forEach(function (val) {
-      var cb = document.getElementById(prefix + '-' + val);
-      if (cb) {
-        cb.checked = true;
-        if (val === 'someoneElse') {
-          var cond = document.getElementById('conditional-' + prefix + '-someoneElse');
-          if (cond) cond.classList.remove('govuk-checkboxes__conditional--hidden');
+    var q = getD3Question('whereHandover');
+    var saved = ((q.perChildAnswers || [])[childIdx]) || {};
+    if (Array.isArray(saved.locations)) {
+      saved.locations.forEach(function (val) {
+        var cb = document.querySelector('input[name="whereHandover"][value="' + val + '"]');
+        if (cb) {
+          cb.checked = true;
+          if (val === 'someoneElse') {
+            var cond = document.getElementById('conditional-someoneElse');
+            if (cond) cond.classList.remove('govuk-checkboxes__conditional--hidden');
+          }
         }
-      }
-    });
-  }
-
-  // Restore saved state
-  var d3 = getDesign3();
-  var saved = d3.whereHandover || {};
-
-  if (saved.mode === 'perChild' && childCount >= 2) {
-    switchToPerChild();
-    var perChildData = saved.perChild || [];
-    children.forEach(function (_, i) {
-      var childData = perChildData[i] || {};
-      restoreCheckboxes('child-' + i, childData.answers);
-      if (childData.someoneElse) {
-        var ta = document.getElementById('child-' + i + '-someoneElse-text');
-        if (ta) ta.value = childData.someoneElse;
-      }
-    });
+      });
+    }
+    if (saved.someoneElseName) document.getElementById('someone-else-text').value = saved.someoneElseName;
   } else {
-    var allAnswers = saved.allAnswer;
-    if (Array.isArray(allAnswers)) {
-      restoreCheckboxes('all', allAnswers);
-    }
-    if (saved.allSomeoneElse) {
-      document.getElementById('all-someoneElse-text').value = saved.allSomeoneElse;
-    }
-  }
+    headingEl.textContent = 'Where does handover take place?';
+    backLink.href = 'get-between-households.html';
+    if (childCount >= 2) document.getElementById('section-per-child-option').style.display = '';
 
-  function switchToPerChild() {
-    document.getElementById('section-all').style.display = 'none';
-    document.getElementById('section-per-child-option').style.display = 'none';
-    document.getElementById('section-per-child').style.display = '';
-  }
-
-  function switchToAll() {
-    document.getElementById('section-all').style.display = '';
-    if (childCount >= 2) {
-      document.getElementById('section-per-child-option').style.display = '';
-    }
-    document.getElementById('section-per-child').style.display = 'none';
-    var specifyRadio = document.getElementById('specify-per-child');
-    if (specifyRadio) specifyRadio.checked = false;
-  }
-
-  var specifyRadio = document.getElementById('specify-per-child');
-  if (specifyRadio) {
-    specifyRadio.addEventListener('change', function () {
-      if (this.checked) {
-        switchToPerChild();
-        window.GOVUKFrontend.initAll();
+    var q = getD3Question('whereHandover');
+    if (q.mode === 'all' && q.allAnswer) {
+      if (Array.isArray(q.allAnswer.locations)) {
+        q.allAnswer.locations.forEach(function (val) {
+          var cb = document.querySelector('input[name="whereHandover"][value="' + val + '"]');
+          if (cb) cb.checked = true;
+        });
       }
-    });
-  }
-
-  document.getElementById('back-to-all-link').addEventListener('click', function (e) {
-    e.preventDefault();
-    switchToAll();
-  });
-
-  function getCheckedValues(prefix) {
-    var checked = document.querySelectorAll('input[name="' + prefix + '-whereHandover"]:checked');
-    var vals = [];
-    checked.forEach(function (cb) { vals.push(cb.value); });
-    return vals;
+      if (q.allAnswer.someoneElseName) document.getElementById('someone-else-text').value = q.allAnswer.someoneElseName;
+    }
   }
 
   document.getElementById('continue-btn').addEventListener('click', function (e) {
     e.preventDefault();
-    clearErrors();
 
-    var isPerChild = document.getElementById('section-per-child').style.display !== 'none';
-    var valid = true;
-
-    if (isPerChild) {
-      var perChildData = [];
-      children.forEach(function (childName, i) {
-        var vals = getCheckedValues('child-' + i);
-        if (vals.length === 0) {
-          showFieldError('form-group-child-' + i, 'child-' + i + '-error');
-          valid = false;
-        } else if (vals.indexOf('someoneElse') !== -1) {
-          var ta = document.getElementById('child-' + i + '-someoneElse-text');
-          if (!ta || !ta.value.trim()) {
-            showFieldError('form-group-child-' + i + '-someoneElse-text', 'child-' + i + '-someoneElse-text-error');
-            valid = false;
-          }
-        }
-        var someoneElseText = '';
-        var ta2 = document.getElementById('child-' + i + '-someoneElse-text');
-        if (ta2) someoneElseText = ta2.value.trim();
-        perChildData.push({ answers: vals, someoneElse: someoneElseText });
-      });
-      if (!valid) { showErrorSummary(); return; }
-      setDesign3({ whereHandover: { mode: 'perChild', perChild: perChildData } });
-    } else {
-      var vals = getCheckedValues('all');
-      if (vals.length === 0) {
-        showFieldError('form-group-all', 'all-error');
-        valid = false;
-      } else if (vals.indexOf('someoneElse') !== -1) {
-        var ta = document.getElementById('all-someoneElse-text');
-        if (!ta || !ta.value.trim()) {
-          showFieldError('form-group-all-someoneElse-text', 'all-someoneElse-text-error');
-          valid = false;
-        }
+    if (!isPerChild) {
+      var specifyRadio = document.getElementById('specify-per-child');
+      if (specifyRadio && specifyRadio.checked) {
+        window.location.href = 'where-handover.html?perchild=1&child=0';
+        return;
       }
-      if (!valid) { showErrorSummary(); return; }
-      var someoneElseText = document.getElementById('all-someoneElse-text').value.trim();
-      setDesign3({ whereHandover: { mode: 'all', allAnswer: vals, allSomeoneElse: someoneElseText } });
     }
 
-    window.location.href = 'will-change-during-holidays.html';
+    var checked = document.querySelectorAll('input[name="whereHandover"]:checked');
+    var checkboxGroup = document.getElementById('form-group-checkboxes');
+    var checkboxError = document.getElementById('checkbox-error');
+    var someoneElseChecked = document.getElementById('someoneElse').checked;
+    var someoneElseText = document.getElementById('someone-else-text').value.trim();
+    var someoneElseGroup = document.getElementById('form-group-someone-else');
+    var someoneElseError = document.getElementById('someone-else-error');
+
+    checkboxGroup.classList.remove('govuk-form-group--error');
+    checkboxError.style.display = 'none';
+    someoneElseGroup.classList.remove('govuk-form-group--error');
+    someoneElseError.style.display = 'none';
+    document.getElementById('someone-else-text').classList.remove('govuk-input--error');
+
+    if (checked.length === 0) { checkboxGroup.classList.add('govuk-form-group--error'); checkboxError.style.display = ''; return; }
+    if (someoneElseChecked && !someoneElseText) {
+      someoneElseGroup.classList.add('govuk-form-group--error');
+      someoneElseError.style.display = '';
+      document.getElementById('someone-else-text').classList.add('govuk-input--error');
+      return;
+    }
+
+    var selectedValues = Array.from(checked).map(function (cb) { return cb.value; });
+    var answer = { locations: selectedValues, someoneElseName: someoneElseChecked ? someoneElseText : '' };
+
+    if (isPerChild) {
+      setD3PerChildAnswer('whereHandover', childIdx, answer);
+      if (childIdx < lastChild) {
+        window.location.href = 'where-handover.html?perchild=1&child=' + (childIdx + 1);
+      } else {
+        window.location.href = 'will-change-during-holidays.html';
+      }
+    } else {
+      setD3AllAnswer('whereHandover', answer);
+      window.location.href = 'will-change-during-holidays.html';
+    }
   });
 
   document.getElementById('skip-link').addEventListener('click', function (e) {
     e.preventDefault();
-    setDesign3({ whereHandover: { mode: 'all', allAnswer: 'skip', allSomeoneElse: '' } });
-    window.location.href = 'will-change-during-holidays.html';
+    var skipAnswer = { locations: 'skip', someoneElseName: '' };
+    if (isPerChild) {
+      setD3PerChildAnswer('whereHandover', childIdx, skipAnswer);
+      if (childIdx < lastChild) {
+        window.location.href = 'where-handover.html?perchild=1&child=' + (childIdx + 1);
+      } else {
+        window.location.href = 'will-change-during-holidays.html';
+      }
+    } else {
+      setD3AllAnswer('whereHandover', skipAnswer);
+      window.location.href = 'will-change-during-holidays.html';
+    }
   });
-
-  function showFieldError(formGroupId, errorId) {
-    var fg = document.getElementById(formGroupId);
-    var err = document.getElementById(errorId);
-    if (fg) fg.classList.add('govuk-form-group--error');
-    if (err) err.style.display = '';
-  }
-
-  function clearErrors() {
-    document.querySelectorAll('.govuk-form-group--error').forEach(function (el) { el.classList.remove('govuk-form-group--error'); });
-    document.querySelectorAll('.govuk-error-message').forEach(function (el) { el.style.display = 'none'; });
-    document.getElementById('error-summary').style.display = 'none';
-  }
-
-  function showErrorSummary() {
-    var summary = document.getElementById('error-summary');
-    summary.style.display = '';
-    summary.scrollIntoView();
-  }
 })();
 </script>
 </body>

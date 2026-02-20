@@ -100,54 +100,55 @@
 (function () {
   function escHtml(str) {
     if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
 
-  var childIdx = getCurrentChildIndex();
+  var params = new URLSearchParams(window.location.search);
+  var childIdx = parseInt(params.get('child') || '0', 10);
   var names = getNames();
-  var childName = (names.children && names.children[childIdx]) ? names.children[childIdx] : 'the child';
-  var childCount = (names.children && names.children.length) ? names.children.length : 1;
+  var children = names.children || [];
+  var lastChild = children.length - 1;
+  var childCount = children.length;
+  var childName = children[childIdx] || 'the child';
 
-  document.getElementById('page-caption').textContent = escHtml(childName) + ' \u2013 Question 5 of 5';
-  document.getElementById('page-heading').textContent = 'What items need to go between ' + escHtml(childName) + '\u2019s households?';
+  var captionEl = document.getElementById('page-caption');
+  captionEl.textContent = childCount > 1
+    ? 'Child ' + (childIdx + 1) + ' of ' + childCount + ' – Question 5 of 5'
+    : 'Question 5 of 5';
 
-  if (childCount > 1) {
-    document.getElementById('apply-all-group').style.display = '';
+  document.getElementById('page-heading').textContent = 'What items need to go between ' + escHtml(childName) + '’s households?';
+
+  document.getElementById('apply-all-group').style.display = 'none';
+
+  // Back link
+  var backLink = document.getElementById('back-link');
+  if (childIdx === 0) {
+    var lastChildPlan = getChildPlan(lastChild);
+    var lastChildAnswers = (lastChildPlan && lastChildPlan.answers) ? lastChildPlan.answers : {};
+    backLink.href = lastChildAnswers.willChangeDuringHolidays === 'Yes'
+      ? 'how-change-during-holidays.html?child=' + lastChild
+      : 'will-change-during-holidays.html?child=' + lastChild;
+  } else {
+    backLink.href = 'items-for-changeover.html?child=' + (childIdx - 1);
   }
 
-  // Set back link based on willChangeDuringHolidays answer
   var plan = getChildPlan(childIdx);
   var savedAnswers = (plan && plan.answers) ? plan.answers : {};
-  var backLink = document.getElementById('back-link');
-  if (savedAnswers.willChangeDuringHolidays === 'Yes') {
-    backLink.href = 'how-change-during-holidays.html';
-  } else {
-    backLink.href = 'will-change-during-holidays.html';
-  }
-
-  // Pre-populate
   if (savedAnswers.itemsForChangeover && savedAnswers.itemsForChangeover !== 'skip') {
     document.getElementById('items-text').value = savedAnswers.itemsForChangeover;
   }
 
-  function saveAndNavigate(answerUpdates) {
-    var applyToAll = document.getElementById('apply-to-all');
-    if (applyToAll && applyToAll.checked) {
-      applyAnswerToAllChildren(answerUpdates);
+  function navigate(updates) {
+    setChildPlan(childIdx, { answers: updates });
+    if (childIdx < lastChild) {
+      window.location.href = 'items-for-changeover.html?child=' + (childIdx + 1);
     } else {
-      setChildPlan(childIdx, { answers: answerUpdates });
+      window.location.href = 'task-list.html';
     }
-    window.location.href = 'task-list.html';
   }
 
   document.getElementById('continue-btn').addEventListener('click', function (e) {
     e.preventDefault();
-
     var text = document.getElementById('items-text').value.trim();
     var formGroup = document.getElementById('form-group-textarea');
     var textareaError = document.getElementById('textarea-error');
@@ -164,12 +165,12 @@
       return;
     }
 
-    saveAndNavigate({ itemsForChangeover: text });
+    navigate({ itemsForChangeover: text });
   });
 
   document.getElementById('skip-link').addEventListener('click', function (e) {
     e.preventDefault();
-    saveAndNavigate({ itemsForChangeover: 'skip' });
+    navigate({ itemsForChangeover: 'skip' });
   });
 })();
 </script>

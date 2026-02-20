@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Handover and holidays plan – Design 2</title>
+  <title>Your parenting plan – Design 2</title>
   <link rel="stylesheet" href="../assets/govuk-frontend.min.css">
 </head>
 <body class="govuk-template__body">
@@ -30,37 +30,20 @@
     <div class="govuk-phase-banner">
       <p class="govuk-phase-banner__content">
         <strong class="govuk-tag govuk-phase-banner__content__tag">Research prototype</strong>
-        <span class="govuk-phase-banner__text">Design 2 – Task list approach</span>
+        <span class="govuk-phase-banner__text">Design 2 – Answer each question for all children in turn</span>
       </p>
     </div>
-
-    <nav class="govuk-breadcrumbs govuk-!-margin-top-3" aria-label="Breadcrumb">
-      <ol class="govuk-breadcrumbs__list">
-        <li class="govuk-breadcrumbs__list-item"><a class="govuk-breadcrumbs__link" href="../index.html">Start</a></li>
-        <li class="govuk-breadcrumbs__list-item">Handover and holidays plan</li>
-      </ol>
-    </nav>
 
     <main class="govuk-main-wrapper" id="main-content">
       <div class="govuk-grid-row">
         <div class="govuk-grid-column-two-thirds">
 
-          <h1 class="govuk-heading-xl">Handover and holidays plan</h1>
-          <p class="govuk-body">Fill in a plan for each child. You can fill them in any order.</p>
+          <h1 class="govuk-heading-l">Your parenting plan</h1>
 
-          <div id="task-list-container"></div>
+          <div id="task-list-root"></div>
 
-          <!-- Copy plan panel (hidden until triggered) -->
-          <div id="copy-panel" class="govuk-inset-text" style="display:none;margin-top:0">
-            <h2 class="govuk-heading-s" id="copy-panel-title">Copy plan to another child</h2>
-            <div class="govuk-form-group">
-              <label class="govuk-label" for="copy-target-select">Copy to:</label>
-              <select class="govuk-select" id="copy-target-select"></select>
-            </div>
-            <div class="govuk-button-group">
-              <button class="govuk-button govuk-!-margin-bottom-0" id="confirm-copy-btn">Copy plan</button>
-              <button class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0" id="cancel-copy-btn">Cancel</button>
-            </div>
+          <div id="continue-section" style="display:none;" class="govuk-!-margin-top-5">
+            <a class="govuk-button" href="../index.html">All sections complete – start again</a>
           </div>
 
         </div>
@@ -86,117 +69,119 @@
   <script>window.GOVUKFrontend.initAll()</script>
   <script src="../assets/js/state.js"></script>
   <script>
-    const { children } = getNames();
-    let copyFromIndex = null;
-
-    function statusTag(childIndex) {
-      if (isChildPlanComplete(childIndex)) {
-        return '<strong class="govuk-tag govuk-tag--green">Completed</strong>';
-      } else if (isChildPlanStarted(childIndex)) {
-        return '<strong class="govuk-tag govuk-tag--light-blue">In progress</strong>';
-      }
-      return '<strong class="govuk-tag govuk-tag--grey">Not started</strong>';
+  (function () {
+    function escHtml(str) {
+      return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
-    function renderTaskList() {
-      const container = document.getElementById('task-list-container');
-      if (!children || children.length === 0) {
-        container.innerHTML = '<p class="govuk-body"><a class="govuk-link" href="../index.html">Go back to start to add children</a></p>';
+    function statusHtml(status) {
+      if (status === 'complete') return 'Completed';
+      if (status === 'incomplete') return '<strong class="govuk-tag govuk-tag--blue">Incomplete</strong>';
+      return '<span class="govuk-task-list__status--cannot-start-yet">Cannot start yet</span>';
+    }
+
+    function taskItem(label, status, href, idSuffix) {
+      var withLink = (status !== 'cannotStart');
+      var nameHtml = withLink
+        ? '<a class="govuk-link govuk-task-list__link" href="' + escHtml(href) + '" aria-describedby="status-' + idSuffix + '">' + escHtml(label) + '</a>'
+        : escHtml(label);
+      return '<li class="govuk-task-list__item' + (withLink ? ' govuk-task-list__item--with-link' : '') + '">' +
+        '<div class="govuk-task-list__name-and-hint">' + nameHtml + '</div>' +
+        '<div class="govuk-task-list__status" id="status-' + idSuffix + '">' + statusHtml(status) + '</div>' +
+        '</li>';
+    }
+
+    function completedItem(label, idSuffix) {
+      return '<li class="govuk-task-list__item">' +
+        '<div class="govuk-task-list__name-and-hint">' + escHtml(label) + '</div>' +
+        '<div class="govuk-task-list__status" id="status-' + idSuffix + '">Completed</div>' +
+        '</li>';
+    }
+
+    function cannotStartItem(label, idSuffix) {
+      return '<li class="govuk-task-list__item">' +
+        '<div class="govuk-task-list__name-and-hint">' + escHtml(label) + '</div>' +
+        '<div class="govuk-task-list__status" id="status-' + idSuffix + '">' +
+          '<span class="govuk-task-list__status--cannot-start-yet">Cannot start yet</span>' +
+        '</div>' +
+        '</li>';
+    }
+
+    function section(heading, itemsHtml) {
+      return '<h2 class="govuk-heading-m">' + escHtml(heading) + '</h2>' +
+        '<ul class="govuk-task-list">' + itemsHtml + '</ul>';
+    }
+
+    function render() {
+      var names = getNames();
+      var children = names.children || [];
+
+      if (!children.length) {
+        document.getElementById('task-list-root').innerHTML =
+          '<p class="govuk-body"><a class="govuk-link" href="../index.html">Go back to the start to add children and parents</a></p>';
         return;
       }
 
-      let html = '<ul class="govuk-task-list">';
-      children.forEach((name, i) => {
-        const complete = isChildPlanComplete(i);
-        const started = isChildPlanStarted(i);
-        const href = 'get-between-households.html';
+      var q1Complete = isD2QuestionComplete('getBetweenHouseholds');
+      var q2Complete = isD2QuestionComplete('whereHandover');
+      var q3Complete = isD2Q3Complete();
+      var q5Complete = isD2QuestionComplete('itemsForChangeover');
 
-        html += `
-          <li class="govuk-task-list__item govuk-task-list__item--with-link">
-            <div class="govuk-task-list__name-and-hint">
-              <a class="govuk-link govuk-task-list__link" href="${href}" data-child-index="${i}" aria-describedby="status-${i}">
-                ${escHtml(name)}'s plan
-              </a>
-            </div>
-            <div class="govuk-task-list__status" id="status-${i}">
-              ${statusTag(i)}
-            </div>
-          </li>`;
-
-        if (complete) {
-          html += `
-            <li class="govuk-task-list__item" style="padding-top:0">
-              <div class="govuk-task-list__name-and-hint" style="padding-bottom:12px">
-                <button class="govuk-link link-styled-button copy-plan-btn" data-child-index="${i}" style="background:none;border:none;cursor:pointer;padding:0;font-size:inherit;font-family:inherit">
-                  Copy ${escHtml(name)}'s plan to another child
-                </button>
-              </div>
-            </li>`;
-        }
-      });
-      html += '</ul>';
-
-      // All done message
-      if (children.every((_, i) => isChildPlanComplete(i))) {
-        html += `<div class="govuk-inset-text">
-          <p class="govuk-body">You have filled in a plan for all children.</p>
-          <p class="govuk-body"><a class="govuk-link" href="../index.html">Start again with different names</a></p>
-        </div>`;
+      function qHref(qKey, page) {
+        var n = getFirstUnansweredChildForQuestion(qKey);
+        return page + '?child=' + n;
       }
 
-      container.innerHTML = html;
+      var q1Status = q1Complete ? 'complete' : 'incomplete';
+      var q2Status = !q1Complete ? 'cannotStart' : (q2Complete ? 'complete' : 'incomplete');
+      var q3Status = !q2Complete ? 'cannotStart' : (q3Complete ? 'complete' : 'incomplete');
+      var q5Status = !q3Complete ? 'cannotStart' : (q5Complete ? 'complete' : 'incomplete');
 
-      // Wire up child plan links
-      container.querySelectorAll('.govuk-task-list__link').forEach(link => {
-        link.addEventListener('click', e => {
-          e.preventDefault();
-          const idx = parseInt(link.dataset.childIndex, 10);
-          setCurrentChildIndex(idx);
-          window.location.href = link.getAttribute('href');
-        });
-      });
+      var q1Href = qHref('getBetweenHouseholds', 'get-between-households.html');
+      var q2Href = q1Complete ? qHref('whereHandover', 'where-handover.html') : '#';
+      var q3Href = q2Complete ? qHref('willChangeDuringHolidays', 'will-change-during-holidays.html') : '#';
+      var q5Href = q3Complete ? qHref('itemsForChangeover', 'items-for-changeover.html') : '#';
 
-      // Wire up copy buttons
-      container.querySelectorAll('.copy-plan-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          copyFromIndex = parseInt(btn.dataset.childIndex, 10);
-          showCopyPanel(copyFromIndex);
-        });
-      });
+      var html = '';
+
+      html += section('Who the plan is for',
+        completedItem('The children', 'children') +
+        completedItem('Who is using this service?', 'whoIsUsing')
+      );
+
+      html += section('Living and visiting',
+        cannotStartItem('Where will the children mostly live?', 'mostlyLive')
+      );
+
+      html += section('Handovers and holidays',
+        taskItem('How will the children get between households?', q1Status, q1Href, 'q1') +
+        taskItem('Where does handover take place?', q2Status, q2Href, 'q2') +
+        taskItem('Will these arrangements change during school holidays?', q3Status, q3Href, 'q3') +
+        taskItem('What items need to go between households?', q5Status, q5Href, 'q5')
+      );
+
+      html += section('Special days',
+        cannotStartItem('What will happen on special days?', 'specialDays')
+      );
+
+      html += section('Other things',
+        cannotStartItem('What other things matter to your children?', 'otherThings')
+      );
+
+      html += section('Decision making',
+        cannotStartItem('How should last-minute changes be communicated?', 'dm1') +
+        cannotStartItem('How much notice should you give to change long-term arrangements?', 'dm2') +
+        cannotStartItem('When will the children\'s needs change?', 'dm3')
+      );
+
+      document.getElementById('task-list-root').innerHTML = html;
+
+      var allHHDone = q1Complete && q2Complete && q3Complete && q5Complete;
+      document.getElementById('continue-section').style.display = allHHDone ? '' : 'none';
     }
 
-    function showCopyPanel(fromIndex) {
-      const panel = document.getElementById('copy-panel');
-      const title = document.getElementById('copy-panel-title');
-      const select = document.getElementById('copy-target-select');
-
-      title.textContent = `Copy ${children[fromIndex]}'s plan to another child`;
-      select.innerHTML = children
-        .map((name, i) => i !== fromIndex
-          ? `<option value="${i}">${escHtml(name)}</option>`
-          : '')
-        .join('');
-
-      panel.style.display = '';
-      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-
-    document.getElementById('confirm-copy-btn').addEventListener('click', () => {
-      const toIndex = parseInt(document.getElementById('copy-target-select').value, 10);
-      copyChildPlan(copyFromIndex, toIndex);
-      document.getElementById('copy-panel').style.display = 'none';
-      renderTaskList();
-    });
-
-    document.getElementById('cancel-copy-btn').addEventListener('click', () => {
-      document.getElementById('copy-panel').style.display = 'none';
-    });
-
-    function escHtml(str) {
-      return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
-
-    renderTaskList();
+    render();
+  })();
   </script>
 </body>
 </html>

@@ -37,61 +37,41 @@
   <main class="govuk-main-wrapper" id="main-content">
     <div class="govuk-grid-row">
       <div class="govuk-grid-column-two-thirds">
-
-        <h1 class="govuk-heading-l">What items will travel with the children at changeover?</h1>
-        <p class="govuk-body">For example: school bags, medication, special toys or comfort items.</p>
-
-        <!-- Error summary -->
-        <div class="govuk-error-summary" id="error-summary" style="display:none;" data-module="govuk-error-summary">
-          <div role="alert">
-            <h2 class="govuk-error-summary__title">There is a problem</h2>
-            <div class="govuk-error-summary__body">
-              <ul class="govuk-list govuk-error-summary__list" id="error-list"></ul>
-            </div>
-          </div>
-        </div>
-
-        <!-- Section A: All children answer -->
-        <div id="section-all">
-          <p class="govuk-body govuk-!-font-weight-bold" id="for-all-label" style="display:none;">For all children:</p>
-          <div class="govuk-form-group" id="form-group-all">
-            <label class="govuk-label govuk-visually-hidden" for="all-items">List the items that will travel with the children</label>
-            <div id="all-error" class="govuk-error-message" style="display:none;">
-              <span class="govuk-visually-hidden">Error:</span>
-              Enter the items that will travel with the children at changeover
-            </div>
-            <textarea class="govuk-textarea" id="all-items" name="all-items" rows="6"
-              placeholder="For example: school bag, inhaler, teddy bear"></textarea>
-          </div>
-        </div>
-
-        <!-- Section B: Specify per child option -->
-        <div id="section-per-child-option" style="display:none;">
-          <p class="govuk-body">Or</p>
-          <div class="govuk-radios" data-module="govuk-radios">
-            <div class="govuk-radios__item">
-              <input class="govuk-radios__input" id="specify-per-child" name="specify-mode" type="radio" value="perChild">
-              <label class="govuk-label govuk-radios__label" for="specify-per-child">
-                Specify an answer for each child separately
+        <form id="page-form" novalidate>
+          <div class="govuk-form-group" id="form-group-textarea">
+            <h1 class="govuk-label-wrapper">
+              <span class="govuk-caption-l" id="page-caption"></span>
+              <label class="govuk-label govuk-label--l" for="items-text" id="page-heading">
+                What items need to go between households?
               </label>
+            </h1>
+            <div class="govuk-hint">Items include clothes, sports kit, school equipment, toys and electronics, medicines and personal care items such as toothbrushes.</div>
+            <div id="textarea-error" class="govuk-error-message" style="display:none;">
+              <span class="govuk-visually-hidden">Error:</span>Enter the items that need to go between households
+            </div>
+            <textarea class="govuk-textarea" id="items-text" name="items-text" rows="6"></textarea>
+          </div>
+
+          <div id="section-per-child-option" style="display:none;" class="govuk-!-margin-top-4">
+            <p class="govuk-body">Or</p>
+            <div class="govuk-radios" data-module="govuk-radios">
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="specify-per-child" name="specify-mode" type="radio" value="perChild">
+                <label class="govuk-label govuk-radios__label" for="specify-per-child">Specify an answer for each child separately</label>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Section C: Per-child answers -->
-        <div id="section-per-child" style="display:none;">
-          <a href="#" class="govuk-link govuk-!-display-block govuk-!-margin-bottom-4" id="back-to-all-link">&lt; Go back to answering for all children</a>
-          <div id="per-child-blocks"></div>
-        </div>
-
-        <div class="govuk-button-group" id="button-group">
-          <button class="govuk-button" data-module="govuk-button" id="continue-btn">Continue</button>
-          <a class="govuk-link" href="#" id="skip-link">We do not need to decide this</a>
-        </div>
-
+          <div class="govuk-button-group govuk-!-margin-top-6">
+            <button class="govuk-button" data-module="govuk-button" id="continue-btn">Continue</button>
+          </div>
+        </form>
+        <p class="govuk-body">
+          <a class="govuk-link" href="#" id="skip-link">We do not need to decide what items need to go between households</a>
+        </p>
       </div>
     </div>
-  </main>
+</main>
 </div>
 
 <footer class="govuk-footer">
@@ -115,162 +95,102 @@
 (function () {
   function escHtml(str) {
     if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
 
+  var params = new URLSearchParams(window.location.search);
+  var isPerChild = params.get('perchild') === '1';
+  var childIdx = parseInt(params.get('child') || '0', 10);
   var names = getNames();
   var children = names.children || [];
+  var lastChild = children.length - 1;
   var childCount = children.length;
+  var childName = children[childIdx] || 'the child';
 
-  // Set back link based on willChangeDuringHolidays
-  var d3 = getDesign3();
-  var willChange = d3.willChangeDuringHolidays;
+  var captionEl = document.getElementById('page-caption');
+  var headingEl = document.getElementById('page-heading');
   var backLink = document.getElementById('back-link');
-  if (willChange === 'Yes') {
-    backLink.href = 'how-change-during-holidays.html';
+
+  if (isPerChild) {
+    if (childCount > 1) captionEl.textContent = 'Child ' + (childIdx + 1) + ' of ' + childCount;
+    headingEl.textContent = 'What items need to go between ' + escHtml(childName) + '\u2019s households?';
+    backLink.href = childIdx === 0 ? 'items-for-changeover.html' : 'items-for-changeover.html?perchild=1&child=' + (childIdx - 1);
+
+    var q = getD3Question('itemsForChangeover');
+    var saved = ((q.perChildAnswers || [])[childIdx]) || {};
+    if (saved.text && saved.text !== 'skip') document.getElementById('items-text').value = saved.text;
   } else {
-    backLink.href = 'will-change-during-holidays.html';
-  }
+    headingEl.textContent = 'What items need to go between households?';
+    if (childCount >= 2) document.getElementById('section-per-child-option').style.display = '';
 
-  // Show "For all children" label and per-child option only if 2+ children
-  if (childCount >= 2) {
-    document.getElementById('for-all-label').style.display = '';
-    document.getElementById('section-per-child-option').style.display = '';
-  }
+    // Back: check Q3 all answer
+    var q3 = getD3Question('willChangeDuringHolidays');
+    backLink.href = (q3.mode === 'all' && q3.allAnswer && q3.allAnswer.answer === 'Yes')
+      ? 'how-change-during-holidays.html'
+      : 'will-change-during-holidays.html';
 
-  // Build per-child blocks
-  var perChildBlocksEl = document.getElementById('per-child-blocks');
-  children.forEach(function (childName, i) {
-    var block = document.createElement('div');
-    block.className = 'govuk-!-margin-bottom-6';
-    block.id = 'child-block-' + i;
-    block.innerHTML =
-      '<p class="govuk-body govuk-!-font-weight-bold">For ' + escHtml(childName) + ':</p>' +
-      '<div class="govuk-form-group" id="form-group-child-' + i + '">' +
-        '<label class="govuk-label govuk-visually-hidden" for="child-' + i + '-items">Items for ' + escHtml(childName) + '</label>' +
-        '<div id="child-' + i + '-error" class="govuk-error-message" style="display:none;">' +
-          '<span class="govuk-visually-hidden">Error:</span>' +
-          'Enter the items for ' + escHtml(childName) +
-        '</div>' +
-        '<textarea class="govuk-textarea" id="child-' + i + '-items" name="child-' + i + '-items" rows="5" ' +
-          'placeholder="For example: school bag, inhaler, teddy bear"></textarea>' +
-      '</div>';
-    perChildBlocksEl.appendChild(block);
-  });
-
-  // Restore saved state
-  // itemsForChangeover in state is a simple string for single mode.
-  // For design3 we use a sub-object under itemsForChangeover if per-child.
-  // The state shape shows itemsForChangeover: '' | 'skip' | null (top level).
-  // We'll store design3 items under getDesign3().itemsForChangeover as an object.
-  var savedItems = d3.itemsForChangeover;
-
-  if (savedItems && typeof savedItems === 'object') {
-    if (savedItems.mode === 'perChild' && childCount >= 2) {
-      switchToPerChild();
-      var perChildData = savedItems.perChild || [];
-      children.forEach(function (_, i) {
-        var childData = perChildData[i] || {};
-        var ta = document.getElementById('child-' + i + '-items');
-        if (ta && childData.answer) ta.value = childData.answer;
-      });
-    } else if (savedItems.allAnswer && savedItems.allAnswer !== 'skip') {
-      document.getElementById('all-items').value = savedItems.allAnswer;
+    var q = getD3Question('itemsForChangeover');
+    if (q.mode === 'all' && q.allAnswer && q.allAnswer.text !== 'skip') {
+      document.getElementById('items-text').value = q.allAnswer.text || '';
     }
-  } else if (typeof savedItems === 'string' && savedItems !== 'skip' && savedItems) {
-    document.getElementById('all-items').value = savedItems;
   }
-
-  function switchToPerChild() {
-    document.getElementById('section-all').style.display = 'none';
-    document.getElementById('section-per-child-option').style.display = 'none';
-    document.getElementById('section-per-child').style.display = '';
-  }
-
-  function switchToAll() {
-    document.getElementById('section-all').style.display = '';
-    if (childCount >= 2) {
-      document.getElementById('section-per-child-option').style.display = '';
-    }
-    document.getElementById('section-per-child').style.display = 'none';
-    var specifyRadio = document.getElementById('specify-per-child');
-    if (specifyRadio) specifyRadio.checked = false;
-  }
-
-  var specifyRadio = document.getElementById('specify-per-child');
-  if (specifyRadio) {
-    specifyRadio.addEventListener('change', function () {
-      if (this.checked) switchToPerChild();
-    });
-  }
-
-  document.getElementById('back-to-all-link').addEventListener('click', function (e) {
-    e.preventDefault();
-    switchToAll();
-  });
 
   document.getElementById('continue-btn').addEventListener('click', function (e) {
     e.preventDefault();
-    clearErrors();
 
-    var isPerChild = document.getElementById('section-per-child').style.display !== 'none';
-    var valid = true;
-
-    if (isPerChild) {
-      var perChildData = [];
-      children.forEach(function (childName, i) {
-        var ta = document.getElementById('child-' + i + '-items');
-        var val = ta ? ta.value.trim() : '';
-        if (!val) {
-          showFieldError('form-group-child-' + i, 'child-' + i + '-error');
-          valid = false;
-        }
-        perChildData.push({ answer: val });
-      });
-      if (!valid) { showErrorSummary(); return; }
-      setDesign3({ itemsForChangeover: { mode: 'perChild', perChild: perChildData } });
-    } else {
-      var val = document.getElementById('all-items').value.trim();
-      if (!val) {
-        showFieldError('form-group-all', 'all-error');
-        valid = false;
+    if (!isPerChild) {
+      var specifyRadio = document.getElementById('specify-per-child');
+      if (specifyRadio && specifyRadio.checked) {
+        window.location.href = 'items-for-changeover.html?perchild=1&child=0';
+        return;
       }
-      if (!valid) { showErrorSummary(); return; }
-      setDesign3({ itemsForChangeover: { mode: 'all', allAnswer: val } });
     }
 
-    window.location.href = '../index.html';
+    var text = document.getElementById('items-text').value.trim();
+    var formGroup = document.getElementById('form-group-textarea');
+    var textareaError = document.getElementById('textarea-error');
+    var textarea = document.getElementById('items-text');
+
+    formGroup.classList.remove('govuk-form-group--error');
+    textareaError.style.display = 'none';
+    textarea.classList.remove('govuk-textarea--error');
+
+    if (!text) {
+      formGroup.classList.add('govuk-form-group--error');
+      textareaError.style.display = '';
+      textarea.classList.add('govuk-textarea--error');
+      return;
+    }
+
+    var answer = { text: text };
+    if (isPerChild) {
+      setD3PerChildAnswer('itemsForChangeover', childIdx, answer);
+      if (childIdx < lastChild) {
+        window.location.href = 'items-for-changeover.html?perchild=1&child=' + (childIdx + 1);
+      } else {
+        window.location.href = '../index.html';
+      }
+    } else {
+      setD3AllAnswer('itemsForChangeover', answer);
+      window.location.href = '../index.html';
+    }
   });
 
   document.getElementById('skip-link').addEventListener('click', function (e) {
     e.preventDefault();
-    setDesign3({ itemsForChangeover: { mode: 'all', allAnswer: 'skip' } });
-    window.location.href = '../index.html';
+    var skipAnswer = { text: 'skip' };
+    if (isPerChild) {
+      setD3PerChildAnswer('itemsForChangeover', childIdx, skipAnswer);
+      if (childIdx < lastChild) {
+        window.location.href = 'items-for-changeover.html?perchild=1&child=' + (childIdx + 1);
+      } else {
+        window.location.href = '../index.html';
+      }
+    } else {
+      setD3AllAnswer('itemsForChangeover', skipAnswer);
+      window.location.href = '../index.html';
+    }
   });
-
-  function showFieldError(formGroupId, errorId) {
-    var fg = document.getElementById(formGroupId);
-    var err = document.getElementById(errorId);
-    if (fg) fg.classList.add('govuk-form-group--error');
-    if (err) err.style.display = '';
-  }
-
-  function clearErrors() {
-    document.querySelectorAll('.govuk-form-group--error').forEach(function (el) { el.classList.remove('govuk-form-group--error'); });
-    document.querySelectorAll('.govuk-error-message').forEach(function (el) { el.style.display = 'none'; });
-    document.getElementById('error-summary').style.display = 'none';
-  }
-
-  function showErrorSummary() {
-    var summary = document.getElementById('error-summary');
-    summary.style.display = '';
-    summary.scrollIntoView();
-  }
 })();
 </script>
 </body>

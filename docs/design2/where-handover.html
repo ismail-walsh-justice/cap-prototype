@@ -25,7 +25,7 @@
 </header>
 
 <div class="govuk-width-container">
-  <a href="get-between-households.html" class="govuk-back-link">Back</a>
+  <a href="#" class="govuk-back-link" id="back-link">Back</a>
 
   <main class="govuk-main-wrapper" id="main-content">
     <div class="govuk-grid-row">
@@ -153,31 +153,35 @@
 (function () {
   function escHtml(str) {
     if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
 
-  var childIdx = getCurrentChildIndex();
+  var params = new URLSearchParams(window.location.search);
+  var childIdx = parseInt(params.get('child') || '0', 10);
   var names = getNames();
-  var childName = (names.children && names.children[childIdx]) ? names.children[childIdx] : 'the child';
+  var children = names.children || [];
+  var lastChild = children.length - 1;
+  var childCount = children.length;
+  var childName = children[childIdx] || 'the child';
   var parent1Name = names.parent1 || 'Parent 1';
   var parent2Name = names.parent2 || 'Parent 2';
-  var childCount = (names.children && names.children.length) ? names.children.length : 1;
 
-  document.getElementById('page-caption').textContent = escHtml(childName) + ' \u2013 Question 2 of 5';
+  var captionEl = document.getElementById('page-caption');
+  captionEl.textContent = childCount > 1
+    ? 'Child ' + (childIdx + 1) + ' of ' + childCount + ' – Question 2 of 5'
+    : 'Question 2 of 5';
+
   document.getElementById('page-heading').textContent = 'Where does handover take place for ' + escHtml(childName) + '?';
-  document.getElementById('label-parent1Home').textContent = 'At ' + escHtml(parent1Name) + '\u2019s home';
-  document.getElementById('label-parent2Home').textContent = 'At ' + escHtml(parent2Name) + '\u2019s home';
+  document.getElementById('label-parent1Home').textContent = 'At ' + escHtml(parent1Name) + '’s home';
+  document.getElementById('label-parent2Home').textContent = 'At ' + escHtml(parent2Name) + '’s home';
 
-  if (childCount > 1) {
-    document.getElementById('apply-all-group').style.display = '';
-  }
+  var backLink = document.getElementById('back-link');
+  backLink.href = childIdx === 0
+    ? 'get-between-households.html?child=' + lastChild
+    : 'where-handover.html?child=' + (childIdx - 1);
 
-  // Pre-populate
+  document.getElementById('apply-all-group').style.display = 'none';
+
   var plan = getChildPlan(childIdx);
   var savedAnswers = (plan && plan.answers) ? plan.answers : {};
   if (Array.isArray(savedAnswers.whereHandover)) {
@@ -186,8 +190,8 @@
       if (cb) {
         cb.checked = true;
         if (val === 'someoneElse') {
-          var conditional = document.getElementById('conditional-someoneElse');
-          if (conditional) conditional.classList.remove('govuk-checkboxes__conditional--hidden');
+          var cond = document.getElementById('conditional-someoneElse');
+          if (cond) cond.classList.remove('govuk-checkboxes__conditional--hidden');
         }
       }
     });
@@ -196,9 +200,17 @@
     document.getElementById('someone-else-text').value = savedAnswers.whereHandoverSomeoneElse;
   }
 
+  function navigate(updates) {
+    setChildPlan(childIdx, { answers: updates });
+    if (childIdx < lastChild) {
+      window.location.href = 'where-handover.html?child=' + (childIdx + 1);
+    } else {
+      window.location.href = 'will-change-during-holidays.html?child=0';
+    }
+  }
+
   document.getElementById('continue-btn').addEventListener('click', function (e) {
     e.preventDefault();
-
     var checked = document.querySelectorAll('input[name="whereHandover"]:checked');
     var checkboxGroup = document.getElementById('form-group-checkboxes');
     var checkboxError = document.getElementById('checkbox-error');
@@ -206,7 +218,6 @@
     var someoneElseText = document.getElementById('someone-else-text').value.trim();
     var someoneElseGroup = document.getElementById('form-group-someone-else');
     var someoneElseError = document.getElementById('someone-else-error');
-    var valid = true;
 
     checkboxGroup.classList.remove('govuk-form-group--error');
     checkboxError.style.display = 'none';
@@ -217,43 +228,25 @@
     if (checked.length === 0) {
       checkboxGroup.classList.add('govuk-form-group--error');
       checkboxError.style.display = '';
-      valid = false;
+      return;
     }
     if (someoneElseChecked && !someoneElseText) {
       someoneElseGroup.classList.add('govuk-form-group--error');
       someoneElseError.style.display = '';
       document.getElementById('someone-else-text').classList.add('govuk-input--error');
-      valid = false;
+      return;
     }
-
-    if (!valid) return;
 
     var selectedValues = Array.from(checked).map(function (cb) { return cb.value; });
-    var answerUpdates = {
+    navigate({
       whereHandover: selectedValues,
       whereHandoverSomeoneElse: someoneElseChecked ? someoneElseText : ''
-    };
-
-    var applyToAll = document.getElementById('apply-to-all');
-    if (applyToAll && applyToAll.checked) {
-      applyAnswerToAllChildren(answerUpdates);
-    } else {
-      setChildPlan(childIdx, { answers: answerUpdates });
-    }
-
-    window.location.href = 'will-change-during-holidays.html';
+    });
   });
 
   document.getElementById('skip-link').addEventListener('click', function (e) {
     e.preventDefault();
-    var answerUpdates = { whereHandover: 'skip', whereHandoverSomeoneElse: '' };
-    var applyToAll = document.getElementById('apply-to-all');
-    if (applyToAll && applyToAll.checked) {
-      applyAnswerToAllChildren(answerUpdates);
-    } else {
-      setChildPlan(childIdx, { answers: answerUpdates });
-    }
-    window.location.href = 'will-change-during-holidays.html';
+    navigate({ whereHandover: 'skip', whereHandoverSomeoneElse: '' });
   });
 })();
 </script>

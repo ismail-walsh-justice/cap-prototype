@@ -32,89 +32,69 @@
     </p>
   </div>
 
-  <a href="../index.html" class="govuk-back-link" id="back-link">Back</a>
+  <a href="#" class="govuk-back-link" id="back-link">Back</a>
 
   <main class="govuk-main-wrapper" id="main-content">
     <div class="govuk-grid-row">
       <div class="govuk-grid-column-two-thirds">
-
-        <h1 class="govuk-heading-l">How will the children get between households?</h1>
-
-        <!-- Error summary (hidden until needed) -->
-        <div class="govuk-error-summary" id="error-summary" style="display:none;" data-module="govuk-error-summary">
-          <div role="alert">
-            <h2 class="govuk-error-summary__title">There is a problem</h2>
-            <div class="govuk-error-summary__body">
-              <ul class="govuk-list govuk-error-summary__list" id="error-list"></ul>
-            </div>
-          </div>
-        </div>
-
-        <!-- Section A: All children answer -->
-        <div id="section-all">
-          <p class="govuk-body govuk-!-font-weight-bold" id="for-all-label" style="display:none;">For all children:</p>
-          <div class="govuk-form-group" id="form-group-all">
+        <form id="page-form" novalidate>
+          <div class="govuk-form-group" id="form-group-radio">
             <fieldset class="govuk-fieldset">
-              <legend class="govuk-fieldset__legend govuk-visually-hidden">How will the children get between households?</legend>
-              <div id="all-error" class="govuk-error-message" style="display:none;">
+              <legend class="govuk-fieldset__legend govuk-fieldset__legend--l">
+                <span class="govuk-caption-l" id="page-caption"></span>
+                <h1 class="govuk-fieldset__heading" id="page-heading">How will the children get between households?</h1>
+              </legend>
+              <div id="radio-error" class="govuk-error-message" style="display:none;">
                 <span class="govuk-visually-hidden">Error:</span>
-                <span id="all-error-text">Select how the children get between households</span>
+                <span id="radio-error-text">Select how the children get between households</span>
               </div>
-              <div class="govuk-radios" data-module="govuk-radios" id="all-radios">
+              <div class="govuk-radios" data-module="govuk-radios" id="radio-group">
                 <div class="govuk-radios__item">
-                  <input class="govuk-radios__input" id="all-parent1Collects" name="all-getBetweenHouseholds" type="radio" value="parent1Collects">
-                  <label class="govuk-label govuk-radios__label" for="all-parent1Collects" id="all-label-parent1Collects">Parent 1 collects the children</label>
+                  <input class="govuk-radios__input" id="parent1Collects" name="getBetweenHouseholds" type="radio" value="parent1Collects">
+                  <label class="govuk-label govuk-radios__label" for="parent1Collects" id="label-parent1Collects">Parent 1 collects the children</label>
                 </div>
                 <div class="govuk-radios__item">
-                  <input class="govuk-radios__input" id="all-parent2Collects" name="all-getBetweenHouseholds" type="radio" value="parent2Collects">
-                  <label class="govuk-label govuk-radios__label" for="all-parent2Collects" id="all-label-parent2Collects">Parent 2 collects the children</label>
+                  <input class="govuk-radios__input" id="parent2Collects" name="getBetweenHouseholds" type="radio" value="parent2Collects">
+                  <label class="govuk-label govuk-radios__label" for="parent2Collects" id="label-parent2Collects">Parent 2 collects the children</label>
                 </div>
                 <div class="govuk-radios__item">
-                  <input class="govuk-radios__input" id="all-other" name="all-getBetweenHouseholds" type="radio" value="other" data-aria-controls="conditional-all-other">
-                  <label class="govuk-label govuk-radios__label" for="all-other">Another arrangement</label>
+                  <input class="govuk-radios__input" id="other" name="getBetweenHouseholds" type="radio" value="other" data-aria-controls="conditional-other">
+                  <label class="govuk-label govuk-radios__label" for="other">Another arrangement</label>
                 </div>
-                <div class="govuk-radios__conditional govuk-radios__conditional--hidden" id="conditional-all-other">
-                  <div class="govuk-form-group" id="form-group-all-other-text">
-                    <label class="govuk-label" for="all-other-text">Describe the arrangement</label>
-                    <div id="all-other-text-error" class="govuk-error-message" style="display:none;">
-                      <span class="govuk-visually-hidden">Error:</span>
-                      Enter a description of the arrangement
+                <div class="govuk-radios__conditional govuk-radios__conditional--hidden" id="conditional-other">
+                  <div class="govuk-form-group" id="form-group-other-text">
+                    <label class="govuk-label" for="other-text">Describe the arrangement</label>
+                    <div id="other-text-error" class="govuk-error-message" style="display:none;">
+                      <span class="govuk-visually-hidden">Error:</span>Enter a description of the arrangement
                     </div>
-                    <textarea class="govuk-textarea" id="all-other-text" name="all-other-text" rows="4"></textarea>
+                    <textarea class="govuk-textarea" id="other-text" name="other-text" rows="4"></textarea>
                   </div>
                 </div>
               </div>
             </fieldset>
           </div>
-        </div>
 
-        <!-- Section B: Specify per child option (only shown for 2+ children) -->
-        <div id="section-per-child-option" style="display:none;">
-          <p class="govuk-body">Or</p>
-          <div class="govuk-radios" data-module="govuk-radios">
-            <div class="govuk-radios__item">
-              <input class="govuk-radios__input" id="specify-per-child" name="specify-mode" type="radio" value="perChild">
-              <label class="govuk-label govuk-radios__label" for="specify-per-child">
-                Specify an answer for each child separately
-              </label>
+          <div id="section-per-child-option" style="display:none;" class="govuk-!-margin-top-4">
+            <p class="govuk-body">Or</p>
+            <div class="govuk-radios" data-module="govuk-radios">
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="specify-per-child" name="specify-mode" type="radio" value="perChild">
+                <label class="govuk-label govuk-radios__label" for="specify-per-child">Specify an answer for each child separately</label>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Section C: Per-child answers (hidden until specify per child is selected) -->
-        <div id="section-per-child" style="display:none;">
-          <a href="#" class="govuk-link govuk-!-display-block govuk-!-margin-bottom-4" id="back-to-all-link">&lt; Go back to answering for all children</a>
-          <div id="per-child-blocks"></div>
-        </div>
+          <div class="govuk-button-group govuk-!-margin-top-6">
+            <button class="govuk-button" data-module="govuk-button" id="continue-btn">Continue</button>
+          </div>
+        </form>
 
-        <div class="govuk-button-group" id="button-group">
-          <button class="govuk-button" data-module="govuk-button" id="continue-btn">Continue</button>
-          <a class="govuk-link" href="#" id="skip-link">We do not need to decide this</a>
-        </div>
-
+        <p class="govuk-body">
+          <a class="govuk-link" href="#" id="skip-link">We do not need to decide how the children get between households</a>
+        </p>
       </div>
     </div>
-  </main>
+</main>
 </div>
 
 <footer class="govuk-footer">
@@ -138,235 +118,132 @@
 (function () {
   function escHtml(str) {
     if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
 
+  var params = new URLSearchParams(window.location.search);
+  var isPerChild = params.get('perchild') === '1';
+  var childIdx = parseInt(params.get('child') || '0', 10);
   var names = getNames();
   var children = names.children || [];
+  var lastChild = children.length - 1;
   var childCount = children.length;
+  var childName = children[childIdx] || 'the child';
   var parent1Name = names.parent1 || 'Parent 1';
   var parent2Name = names.parent2 || 'Parent 2';
 
-  // Update labels with real parent names
-  var childLabel = childCount === 1 ? escHtml(children[0] || 'the child') : 'the children';
-  document.getElementById('all-label-parent1Collects').textContent = escHtml(parent1Name) + ' collects ' + childLabel;
-  document.getElementById('all-label-parent2Collects').textContent = escHtml(parent2Name) + ' collects ' + childLabel;
+  var captionEl = document.getElementById('page-caption');
+  var headingEl = document.getElementById('page-heading');
+  var backLink = document.getElementById('back-link');
 
-  // Show "For all children" label and per-child option only if 2+ children
-  if (childCount >= 2) {
-    document.getElementById('for-all-label').style.display = '';
-    document.getElementById('section-per-child-option').style.display = '';
-  }
+  if (isPerChild) {
+    if (childCount > 1) {
+      captionEl.textContent = 'Child ' + (childIdx + 1) + ' of ' + childCount;
+    }
+    headingEl.textContent = 'How will ' + escHtml(childName) + ' get between households?';
+    document.getElementById('label-parent1Collects').textContent = escHtml(parent1Name) + ' collects ' + escHtml(childName);
+    document.getElementById('label-parent2Collects').textContent = escHtml(parent2Name) + ' collects ' + escHtml(childName);
+    backLink.href = childIdx === 0 ? 'get-between-households.html' : 'get-between-households.html?perchild=1&child=' + (childIdx - 1);
 
-  // Build per-child blocks
-  var perChildBlocksEl = document.getElementById('per-child-blocks');
-  children.forEach(function (childName, i) {
-    var block = document.createElement('div');
-    block.className = 'govuk-!-margin-bottom-6';
-    block.id = 'child-block-' + i;
-    block.innerHTML =
-      '<p class="govuk-body govuk-!-font-weight-bold">For ' + escHtml(childName) + ':</p>' +
-      '<div class="govuk-form-group" id="form-group-child-' + i + '">' +
-        '<fieldset class="govuk-fieldset">' +
-          '<legend class="govuk-fieldset__legend govuk-visually-hidden">How will ' + escHtml(childName) + ' get between households?</legend>' +
-          '<div id="child-' + i + '-error" class="govuk-error-message" style="display:none;">' +
-            '<span class="govuk-visually-hidden">Error:</span>' +
-            'Select how ' + escHtml(childName) + ' gets between households' +
-          '</div>' +
-          '<div class="govuk-radios" data-module="govuk-radios" id="child-' + i + '-radios">' +
-            '<div class="govuk-radios__item">' +
-              '<input class="govuk-radios__input" id="child-' + i + '-parent1Collects" name="child-' + i + '-getBetweenHouseholds" type="radio" value="parent1Collects">' +
-              '<label class="govuk-label govuk-radios__label" for="child-' + i + '-parent1Collects">' + escHtml(parent1Name) + ' collects ' + escHtml(childName) + '</label>' +
-            '</div>' +
-            '<div class="govuk-radios__item">' +
-              '<input class="govuk-radios__input" id="child-' + i + '-parent2Collects" name="child-' + i + '-getBetweenHouseholds" type="radio" value="parent2Collects">' +
-              '<label class="govuk-label govuk-radios__label" for="child-' + i + '-parent2Collects">' + escHtml(parent2Name) + ' collects ' + escHtml(childName) + '</label>' +
-            '</div>' +
-            '<div class="govuk-radios__item">' +
-              '<input class="govuk-radios__input" id="child-' + i + '-other" name="child-' + i + '-getBetweenHouseholds" type="radio" value="other" data-aria-controls="conditional-child-' + i + '-other">' +
-              '<label class="govuk-label govuk-radios__label" for="child-' + i + '-other">Another arrangement</label>' +
-            '</div>' +
-            '<div class="govuk-radios__conditional govuk-radios__conditional--hidden" id="conditional-child-' + i + '-other">' +
-              '<div class="govuk-form-group" id="form-group-child-' + i + '-other-text">' +
-                '<label class="govuk-label" for="child-' + i + '-other-text">Describe the arrangement</label>' +
-                '<div id="child-' + i + '-other-text-error" class="govuk-error-message" style="display:none;">' +
-                  '<span class="govuk-visually-hidden">Error:</span>' +
-                  'Enter a description of the arrangement' +
-                '</div>' +
-                '<textarea class="govuk-textarea" id="child-' + i + '-other-text" name="child-' + i + '-other-text" rows="4"></textarea>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-        '</fieldset>' +
-      '</div>';
-    perChildBlocksEl.appendChild(block);
-  });
-
-  // Re-init GOV.UK Frontend for dynamically created radios
-  if (window.GOVUKFrontend) {
-    var radiosEls = perChildBlocksEl.querySelectorAll('[data-module="govuk-radios"]');
-    radiosEls.forEach(function (el) {
-      new window.GOVUKFrontend.Radios(el).init();
-    });
-  }
-
-  // Restore saved state
-  var d3 = getDesign3();
-  var saved = d3.getBetweenHouseholds || {};
-
-  if (saved.mode === 'perChild' && childCount >= 2) {
-    switchToPerChild();
-    // Populate per-child fields
-    var perChildData = saved.perChild || [];
-    children.forEach(function (_, i) {
-      var childData = perChildData[i] || {};
-      if (childData.answer) {
-        var r = document.querySelector('input[name="child-' + i + '-getBetweenHouseholds"][value="' + childData.answer + '"]');
-        if (r) {
-          r.checked = true;
-          if (childData.answer === 'other') {
-            var cond = document.getElementById('conditional-child-' + i + '-other');
-            if (cond) cond.classList.remove('govuk-radios__conditional--hidden');
-          }
-        }
-      }
-      if (childData.other) {
-        var textarea = document.getElementById('child-' + i + '-other-text');
-        if (textarea) textarea.value = childData.other;
-      }
-    });
-  } else {
-    // Populate all-children fields
-    if (saved.allAnswer) {
-      var r = document.querySelector('input[name="all-getBetweenHouseholds"][value="' + saved.allAnswer + '"]');
+    var q = getD3Question('getBetweenHouseholds');
+    var saved = ((q.perChildAnswers || [])[childIdx]) || {};
+    if (saved.answer) {
+      var r = document.querySelector('input[name="getBetweenHouseholds"][value="' + saved.answer + '"]');
       if (r) {
         r.checked = true;
-        if (saved.allAnswer === 'other') {
-          var cond = document.getElementById('conditional-all-other');
+        if (saved.answer === 'other') {
+          var cond = document.getElementById('conditional-other');
           if (cond) cond.classList.remove('govuk-radios__conditional--hidden');
         }
       }
     }
-    if (saved.allOther) {
-      document.getElementById('all-other-text').value = saved.allOther;
-    }
-  }
+    if (saved.other) document.getElementById('other-text').value = saved.other;
+  } else {
+    headingEl.textContent = 'How will the children get between households?';
+    document.getElementById('label-parent1Collects').textContent = escHtml(parent1Name) + ' collects the children';
+    document.getElementById('label-parent2Collects').textContent = escHtml(parent2Name) + ' collects the children';
+    backLink.href = '../index.html';
 
-  // Switch to per-child mode
-  function switchToPerChild() {
-    document.getElementById('section-all').style.display = 'none';
-    document.getElementById('section-per-child-option').style.display = 'none';
-    document.getElementById('section-per-child').style.display = '';
-  }
+    if (childCount >= 2) document.getElementById('section-per-child-option').style.display = '';
 
-  // Switch back to all mode
-  function switchToAll() {
-    document.getElementById('section-all').style.display = '';
-    if (childCount >= 2) {
-      document.getElementById('section-per-child-option').style.display = '';
-    }
-    document.getElementById('section-per-child').style.display = 'none';
-    // Uncheck the specify radio
-    var specifyRadio = document.getElementById('specify-per-child');
-    if (specifyRadio) specifyRadio.checked = false;
-  }
-
-  // Listen for specify-per-child radio
-  var specifyRadio = document.getElementById('specify-per-child');
-  if (specifyRadio) {
-    specifyRadio.addEventListener('change', function () {
-      if (this.checked) {
-        switchToPerChild();
-        window.GOVUKFrontend.initAll();
+    var q = getD3Question('getBetweenHouseholds');
+    if (q.mode === 'all' && q.allAnswer) {
+      var r = document.querySelector('input[name="getBetweenHouseholds"][value="' + q.allAnswer.answer + '"]');
+      if (r) {
+        r.checked = true;
+        if (q.allAnswer.answer === 'other') {
+          var cond = document.getElementById('conditional-other');
+          if (cond) cond.classList.remove('govuk-radios__conditional--hidden');
+        }
       }
-    });
+      if (q.allAnswer.other) document.getElementById('other-text').value = q.allAnswer.other;
+    }
   }
 
-  // Back to all link
-  document.getElementById('back-to-all-link').addEventListener('click', function (e) {
-    e.preventDefault();
-    switchToAll();
-  });
-
-  // Continue button
   document.getElementById('continue-btn').addEventListener('click', function (e) {
     e.preventDefault();
-    clearErrors();
+    var selectedRadio = document.querySelector('input[name="getBetweenHouseholds"]:checked');
+    var radioGroup = document.getElementById('form-group-radio');
+    var radioError = document.getElementById('radio-error');
+    var otherTextGroup = document.getElementById('form-group-other-text');
+    var otherTextError = document.getElementById('other-text-error');
+    var otherText = document.getElementById('other-text').value.trim();
 
-    var isPerChild = document.getElementById('section-per-child').style.display !== 'none';
-    var valid = true;
-
-    if (isPerChild) {
-      var perChildData = [];
-      children.forEach(function (childName, i) {
-        var selected = document.querySelector('input[name="child-' + i + '-getBetweenHouseholds"]:checked');
-        if (!selected) {
-          showFieldError('form-group-child-' + i, 'child-' + i + '-error');
-          valid = false;
-        } else if (selected.value === 'other') {
-          var otherText = (document.getElementById('child-' + i + '-other-text') || {}).value;
-          if (!otherText || !otherText.trim()) {
-            showFieldError('form-group-child-' + i + '-other-text', 'child-' + i + '-other-text-error');
-            valid = false;
-          }
-        }
-        perChildData.push({
-          answer: selected ? selected.value : null,
-          other: selected && selected.value === 'other' ? (document.getElementById('child-' + i + '-other-text') || {}).value || '' : ''
-        });
-      });
-      if (!valid) { showErrorSummary(); return; }
-      setDesign3({ getBetweenHouseholds: { mode: 'perChild', perChild: perChildData } });
-    } else {
-      var selected = document.querySelector('input[name="all-getBetweenHouseholds"]:checked');
-      if (!selected) {
-        showFieldError('form-group-all', 'all-error');
-        valid = false;
-      } else if (selected.value === 'other') {
-        var otherText = document.getElementById('all-other-text').value.trim();
-        if (!otherText) {
-          showFieldError('form-group-all-other-text', 'all-other-text-error');
-          valid = false;
-        }
+    if (!isPerChild) {
+      var specifyRadio = document.getElementById('specify-per-child');
+      if (specifyRadio && specifyRadio.checked) {
+        window.location.href = 'get-between-households.html?perchild=1&child=0';
+        return;
       }
-      if (!valid) { showErrorSummary(); return; }
-      var otherVal = selected.value === 'other' ? document.getElementById('all-other-text').value.trim() : '';
-      setDesign3({ getBetweenHouseholds: { mode: 'all', allAnswer: selected.value, allOther: otherVal } });
     }
 
-    window.location.href = 'where-handover.html';
+    radioGroup.classList.remove('govuk-form-group--error');
+    radioError.style.display = 'none';
+    if (otherTextGroup) { otherTextGroup.classList.remove('govuk-form-group--error'); otherTextError.style.display = 'none'; }
+    document.getElementById('other-text').classList.remove('govuk-textarea--error');
+
+    if (!selectedRadio) {
+      radioGroup.classList.add('govuk-form-group--error');
+      radioError.style.display = '';
+      return;
+    }
+    if (selectedRadio.value === 'other' && !otherText) {
+      if (otherTextGroup) otherTextGroup.classList.add('govuk-form-group--error');
+      otherTextError.style.display = '';
+      document.getElementById('other-text').classList.add('govuk-textarea--error');
+      return;
+    }
+
+    var answer = { answer: selectedRadio.value, other: selectedRadio.value === 'other' ? otherText : '' };
+
+    if (isPerChild) {
+      setD3PerChildAnswer('getBetweenHouseholds', childIdx, answer);
+      if (childIdx < lastChild) {
+        window.location.href = 'get-between-households.html?perchild=1&child=' + (childIdx + 1);
+      } else {
+        window.location.href = 'where-handover.html';
+      }
+    } else {
+      setD3AllAnswer('getBetweenHouseholds', answer);
+      window.location.href = 'where-handover.html';
+    }
   });
 
-  // Skip link
   document.getElementById('skip-link').addEventListener('click', function (e) {
     e.preventDefault();
-    setDesign3({ getBetweenHouseholds: { mode: 'all', allAnswer: 'skip', allOther: '' } });
-    window.location.href = 'where-handover.html';
+    var skipAnswer = { answer: 'skip', other: '' };
+    if (isPerChild) {
+      setD3PerChildAnswer('getBetweenHouseholds', childIdx, skipAnswer);
+      if (childIdx < lastChild) {
+        window.location.href = 'get-between-households.html?perchild=1&child=' + (childIdx + 1);
+      } else {
+        window.location.href = 'where-handover.html';
+      }
+    } else {
+      setD3AllAnswer('getBetweenHouseholds', skipAnswer);
+      window.location.href = 'where-handover.html';
+    }
   });
-
-  function showFieldError(formGroupId, errorId) {
-    var fg = document.getElementById(formGroupId);
-    var err = document.getElementById(errorId);
-    if (fg) fg.classList.add('govuk-form-group--error');
-    if (err) err.style.display = '';
-  }
-
-  function clearErrors() {
-    document.querySelectorAll('.govuk-form-group--error').forEach(function (el) { el.classList.remove('govuk-form-group--error'); });
-    document.querySelectorAll('.govuk-error-message').forEach(function (el) { el.style.display = 'none'; });
-    document.getElementById('error-summary').style.display = 'none';
-  }
-
-  function showErrorSummary() {
-    var summary = document.getElementById('error-summary');
-    summary.style.display = '';
-    summary.scrollIntoView();
-  }
 })();
 </script>
 </body>

@@ -122,3 +122,59 @@ function setDesign3(updates) {
   const d3 = getDesign3();
   setState({ design3: deepMerge(d3, updates) });
 }
+
+// ─── Design 2: per-question helpers ──────────────────────────────────────────
+
+function isD2QuestionAnsweredForChild(qKey, childIndex) {
+  const plan = getChildPlan(childIndex);
+  return !!(plan.answers && plan.answers[qKey] != null);
+}
+
+function isD2QuestionComplete(qKey) {
+  const { children } = getNames();
+  return children.length > 0 && children.every((_, i) => isD2QuestionAnsweredForChild(qKey, i));
+}
+
+function isD2Q3Complete() {
+  const { children } = getNames();
+  return children.length > 0 && children.every((_, i) => {
+    const a = getChildPlan(i).answers || {};
+    if (!a.willChangeDuringHolidays) return false;
+    if (a.willChangeDuringHolidays === 'Yes') return !!a.howChangeDuringHolidays;
+    return true;
+  });
+}
+
+function getFirstUnansweredChildForQuestion(qKey) {
+  const { children } = getNames();
+  for (let i = 0; i < children.length; i++) {
+    if (!isD2QuestionAnsweredForChild(qKey, i)) return i;
+  }
+  return 0;
+}
+
+// ─── Design 3: per-question helpers ──────────────────────────────────────────
+
+function getD3Question(qKey) {
+  return getDesign3()[qKey] || {};
+}
+
+function setD3AllAnswer(qKey, answer) {
+  setDesign3({ [qKey]: { mode: 'all', allAnswer: answer } });
+}
+
+function setD3PerChildAnswer(qKey, childIndex, answer) {
+  const existing = getD3Question(qKey);
+  const perChildAnswers = [...(existing.perChildAnswers || [])];
+  while (perChildAnswers.length <= childIndex) perChildAnswers.push(null);
+  perChildAnswers[childIndex] = answer;
+  setDesign3({ [qKey]: { mode: 'perChild', perChildAnswers } });
+}
+
+function isD3QuestionComplete(qKey) {
+  const q = getD3Question(qKey);
+  if (!q.mode) return false;
+  if (q.mode === 'all') return !!q.allAnswer;
+  const { children } = getNames();
+  return children.length > 0 && children.every((_, i) => !!(q.perChildAnswers || [])[i]);
+}
