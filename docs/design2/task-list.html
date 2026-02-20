@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="../assets/govuk-frontend.min.css">
 </head>
 <body class="govuk-template__body">
-  <script>document.body.className += ' js-enabled'</script>
+  <script>document.body.classList.add('govuk-frontend-supported')</script>
   <a href="#main-content" class="govuk-skip-link" data-module="govuk-skip-link">Skip to main content</a>
 
   <header class="govuk-header" data-module="govuk-header">
@@ -65,8 +65,8 @@
     </div>
   </footer>
 
-  <script src="../assets/all.bundle.js"></script>
-  <script>window.GOVUKFrontend.initAll()</script>
+  <script src="../assets/all.bundle.js" defer></script>
+  <script>document.addEventListener('DOMContentLoaded', function() { window.GOVUKFrontend.initAll(); });</script>
   <script src="../assets/js/state.js"></script>
   <script>
   (function () {

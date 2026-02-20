@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="assets/govuk-frontend.min.css">
 </head>
 <body class="govuk-template__body">
-  <script>document.body.className += ' js-enabled'</script>
+  <script>document.body.classList.add('govuk-frontend-supported')</script>
   <script>
     if (sessionStorage.getItem('cap-hh-prototype-auth') !== 'true') {
       window.location.replace('password.html?returnURL=' + encodeURIComponent(window.location.href));
@@ -84,8 +84,8 @@
     </div>
   </footer>
 
-  <script src="assets/all.bundle.js"></script>
-  <script>window.GOVUKFrontend.initAll()</script>
+  <script src="assets/all.bundle.js" defer></script>
+  <script>document.addEventListener('DOMContentLoaded', function() { window.GOVUKFrontend.initAll(); });</script>
   <script src="assets/js/state.js"></script>
   <script>
     var params = new URLSearchParams(window.location.search);
