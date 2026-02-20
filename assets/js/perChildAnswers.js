@@ -12,7 +12,11 @@ function setupPerChildAnswers() {
   const defaultAnswerSection = document.querySelector('.default-answer-section');
   const defaultAnswerLabel = document.querySelector('.default-answer-label');
 
-  if (!template || !container) return;
+  if (!container) return;
+
+  // Detect design mode from the button data attribute
+  const designMode = addButton.dataset.designMode || 'design1';
+  const isDesign4 = designMode === 'design4';
 
   // Parse data from the button's data attributes
   const numberOfChildren = parseInt(addButton.dataset.numberOfChildren, 10);
@@ -62,9 +66,55 @@ function setupPerChildAnswers() {
     const entryIndex = entryCounter++;
     const fieldName = `${fieldBaseName}-${entryIndex}`;
 
+    // Use Design 4 template if in design4 mode
+    const templateEl = isDesign4
+      ? document.getElementById('per-child-entry-template-d4')
+      : template;
+    if (!templateEl) return;
+
     // Clone the template
-    const templateContent = template.content.cloneNode(true);
+    const templateContent = templateEl.content.cloneNode(true);
     const entryDiv = templateContent.querySelector('.per-child-entry');
+
+    // Design 4: populate child checkboxes
+    if (isDesign4) {
+      const checkboxContainer = entryDiv.querySelector('.d4-child-checkboxes');
+      if (checkboxContainer) {
+        checkboxContainer.id = `child-checkboxes-${entryIndex}`;
+        childOptions.forEach(function(option) {
+          const item = document.createElement('div');
+          item.className = 'govuk-checkboxes__item';
+          item.innerHTML =
+            '<input class="govuk-checkboxes__input"' +
+            ' id="child-checkbox-' + entryIndex + '-' + option.value + '"' +
+            ' name="child-checkbox-' + entryIndex + '"' +
+            ' type="checkbox"' +
+            ' value="' + option.value + '">' +
+            '<label class="govuk-label govuk-checkboxes__label"' +
+            ' for="child-checkbox-' + entryIndex + '-' + option.value + '">' +
+            option.text +
+            '</label>';
+          checkboxContainer.appendChild(item);
+        });
+        // Re-initialize GOV.UK checkboxes
+        if (window.GOVUKFrontend && window.GOVUKFrontend.Checkboxes) {
+          try { new window.GOVUKFrontend.Checkboxes(checkboxContainer).init(); } catch(e) {}
+        }
+      }
+
+      // Add remove button handler
+      const removeBtn = entryDiv.querySelector('.remove-child-entry-btn');
+      if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+          entryDiv.remove();
+          updateAddButtonVisibility();
+        });
+      }
+
+      container.appendChild(entryDiv);
+      updateAddButtonVisibility();
+      return; // Design 4 doesn't track child assignments
+    }
 
     // Update entry index
     entryDiv.dataset.entryIndex = entryIndex;

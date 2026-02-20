@@ -58,7 +58,7 @@ export type MostlyLiveAnswer = {
 };
 
 // Design mode for per-child answers
-export type PerChildDesignMode = 'design1' | 'design2';
+export type PerChildDesignMode = 'design1' | 'design2' | 'design3' | 'design4';
 
 // Design 2: Per-child plan structure - a complete plan for each child
 export type ChildPlan = {

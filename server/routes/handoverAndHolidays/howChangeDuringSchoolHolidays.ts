@@ -7,7 +7,7 @@ import FORM_STEPS from '../../constants/formSteps';
 import paths from '../../constants/paths';
 import checkFormProgressFromConfig  from '../../middleware/checkFormProgressFromConfig';
 import addCompletedStep from '../../utils/addCompletedStep';
-import { isAnswerPerChild, isPerChildPoCEnabled } from '../../utils/perChildSession';
+import { isAnswerPerChild, isDesign2, isDesign3, isDesign4, isPerChildPoCEnabled, getSessionValue, setSessionSection } from '../../utils/perChildSession';
 import { getBackUrl } from '../../utils/sessionHelpers';
 
 // Helper to get the field name for a specific child index
@@ -27,7 +27,11 @@ const safeString = (value: unknown): string => {
 const howChangeDuringSchoolHolidaysRoutes = (router: Router) => {
   router.get(paths.HANDOVER_HOLIDAYS_HOW_CHANGE_DURING_SCHOOL_HOLIDAYS, checkFormProgressFromConfig(FORM_STEPS.HANDOVER_HOLIDAYS_HOW_CHANGE_DURING_SCHOOL_HOLIDAYS), (request, response) => {
     const { numberOfChildren, namesOfChildren, handoverAndHolidays } = request.session;
-    const existingAnswers = handoverAndHolidays?.howChangeDuringSchoolHolidays;
+    const isD2 = isDesign2(request.session);
+    const activeChildIndex = isD2 ? (request.session.currentChildIndex ?? 0) : 0;
+    const activeChildName = isD2 ? namesOfChildren[activeChildIndex] : null;
+    const sessionHAH = isD2 ? getSessionValue<any>(request.session, 'handoverAndHolidays') as typeof handoverAndHolidays : handoverAndHolidays;
+    const existingAnswers = sessionHAH?.howChangeDuringSchoolHolidays;
 
     // Build form values from existing session data
     const formValues: Record<string, string> = {};
@@ -65,13 +69,16 @@ const howChangeDuringSchoolHolidaysRoutes = (router: Router) => {
     response.render('pages/handoverAndHolidays/howChangeDuringSchoolHolidays', {
       errors: request.flash('errors'),
       formValues: { ...formValues, ...request.flash('formValues')?.[0] },
-      title: request.__('handoverAndHolidays.howChangeDuringSchoolHolidays.title'),
+      title: isD2 ? `How will ${activeChildName}'s arrangements change during school holidays?` : request.__('handoverAndHolidays.howChangeDuringSchoolHolidays.title'),
       backLinkHref: getBackUrl(request.session, paths.HANDOVER_HOLIDAYS_WILL_CHANGE_DURING_SCHOOL_HOLIDAYS),
       numberOfChildren,
       namesOfChildren,
       childOptions,
       childrenWithAnswers,
-      showPerChildOption: numberOfChildren > 1 && isAnswerPerChild(request.session) && isPerChildPoCEnabled(request.session),
+      childProgressCaption: isD2 ? `Child ${activeChildIndex + 1} of ${numberOfChildren}` : null,
+      showPerChildOption: numberOfChildren > 1 && isAnswerPerChild(request.session) && !isDesign3(request.session) && isPerChildPoCEnabled(request.session),
+      showDesign3Option: numberOfChildren > 1 && isDesign3(request.session) && isPerChildPoCEnabled(request.session),
+      designMode: request.session.perChildDesignMode || 'design1',
     });
   });
 
@@ -111,6 +118,20 @@ const howChangeDuringSchoolHolidaysRoutes = (router: Router) => {
         .catch(next);
     },
     (request, response) => {
+      // Design 3: handle "specify per child" - switch to per-child (Design 2) mode
+      if (isDesign3(request.session) && request.body['specify-per-child'] === 'yes') {
+        request.session.perChildDesignMode = 'design2' as any;
+        request.session.currentChildIndex = 0;
+        if (!request.session.childPlans || request.session.childPlans.length === 0) {
+          request.session.childPlans = (request.session.namesOfChildren || []).map((name: string, index: number) => ({
+            childIndex: index,
+            childName: name,
+            isComplete: false,
+          }));
+        }
+        return response.redirect(paths.HANDOVER_HOLIDAYS_HOW_CHANGE_DURING_SCHOOL_HOLIDAYS);
+      }
+
       const errors = validationResult(request);
 
       if (!errors.isEmpty()) {
@@ -128,16 +149,36 @@ const howChangeDuringSchoolHolidaysRoutes = (router: Router) => {
       // Check for additional per-child entries
       // We look for patterns like child-selector-1, child-selector-2, etc.
       // and their corresponding answer fields
-      const additionalEntries = Object.keys(request.body)
-        .filter(key => key.startsWith('child-selector-'))
-        .map(key => {
-          const entryIndex = parseInt(key.replace('child-selector-', ''), 10);
-          const childIndex = parseInt(request.body[key], 10);
-          const answerFieldName = getFieldName(entryIndex);
-          const answer = safeString(request.body[answerFieldName]);
-          return { childIndex, answer, entryIndex };
-        })
-        .filter(entry => !isNaN(entry.childIndex) && entry.answer);
+      let additionalEntries: Array<{childIndex: number, answer: string, entryIndex: number}>;
+
+      if (isDesign4(request.session)) {
+        // Design 4: checkboxes can select multiple children per entry
+        additionalEntries = Object.keys(request.body)
+          .filter(key => /^child-checkbox-\d+$/.test(key))
+          .flatMap(key => {
+            const entryIndex = parseInt(key.replace('child-checkbox-', ''), 10);
+            const rawValues = request.body[key];
+            const childIndices = (Array.isArray(rawValues) ? rawValues : [rawValues])
+              .map((v: string) => parseInt(v, 10))
+              .filter((v: number) => !isNaN(v));
+            const answerFieldName = getFieldName(entryIndex);
+            const answer = safeString(request.body[answerFieldName]);
+            return childIndices.map(childIndex => ({ childIndex, answer, entryIndex }));
+          })
+          .filter(entry => entry.answer);
+      } else {
+        // Design 1: SELECT dropdown with single child
+        additionalEntries = Object.keys(request.body)
+          .filter(key => key.startsWith('child-selector-'))
+          .map(key => {
+            const entryIndex = parseInt(key.replace('child-selector-', ''), 10);
+            const childIndex = parseInt(request.body[key], 10);
+            const answerFieldName = getFieldName(entryIndex);
+            const answer = safeString(request.body[answerFieldName]);
+            return { childIndex, answer, entryIndex };
+          })
+          .filter(entry => !isNaN(entry.childIndex) && entry.answer);
+      }
 
       // Store per-child answers
       additionalEntries.forEach(entry => {
@@ -147,18 +188,49 @@ const howChangeDuringSchoolHolidaysRoutes = (router: Router) => {
         };
       });
 
-      request.session.handoverAndHolidays = {
-        ...request.session.handoverAndHolidays,
-        howChangeDuringSchoolHolidays: {
-          default: {
-            noDecisionRequired: false,
-            answer: defaultAnswer,
-          },
-          ...(Object.keys(byChild).length > 0 ? { byChild } : {}),
+      const { numberOfChildren } = request.session;
+
+      const newHowChange = {
+        default: {
+          noDecisionRequired: false,
+          answer: defaultAnswer,
         },
+        ...(Object.keys(byChild).length > 0 ? { byChild } : {}),
       };
 
+      if (isDesign2(request.session)) {
+        const currentHAH = getSessionValue<any>(request.session, 'handoverAndHolidays') || {};
+        setSessionSection(request.session, 'handoverAndHolidays', { ...currentHAH, howChangeDuringSchoolHolidays: newHowChange });
+      } else {
+        request.session.handoverAndHolidays = {
+          ...request.session.handoverAndHolidays,
+          howChangeDuringSchoolHolidays: newHowChange,
+        };
+      }
+
       addCompletedStep(request, FORM_STEPS.HANDOVER_HOLIDAYS_HOW_CHANGE_DURING_SCHOOL_HOLIDAYS);
+
+      if (isDesign2(request.session)) {
+        if (request.body['apply-to-all'] === 'yes') {
+          const savedIndex = request.session.currentChildIndex ?? 0;
+          for (let i = 0; i < numberOfChildren; i++) {
+            if (i !== savedIndex) {
+              request.session.currentChildIndex = i;
+              const childHAH = getSessionValue<any>(request.session, 'handoverAndHolidays') || {};
+              setSessionSection(request.session, 'handoverAndHolidays', { ...childHAH, howChangeDuringSchoolHolidays: newHowChange });
+            }
+          }
+          request.session.currentChildIndex = 0;
+          return response.redirect(paths.TASK_LIST);
+        }
+        const nextChildIndex = (request.session.currentChildIndex ?? 0) + 1;
+        if (nextChildIndex < numberOfChildren) {
+          request.session.currentChildIndex = nextChildIndex;
+          return response.redirect(paths.HANDOVER_HOLIDAYS_HOW_CHANGE_DURING_SCHOOL_HOLIDAYS);
+        }
+        request.session.currentChildIndex = 0;
+        return response.redirect(paths.TASK_LIST);
+      }
 
       return response.redirect(paths.HANDOVER_HOLIDAYS_ITEMS_FOR_CHANGEOVER);
     },

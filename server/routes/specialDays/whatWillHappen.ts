@@ -7,7 +7,7 @@ import FORM_STEPS from '../../constants/formSteps';
 import paths from '../../constants/paths';
 import checkFormProgressFromConfig  from '../../middleware/checkFormProgressFromConfig';
 import addCompletedStep from '../../utils/addCompletedStep';
-import { isPerChildPoCEnabled } from '../../utils/perChildSession';
+import { isDesign2, isDesign3, isDesign4, isPerChildPoCEnabled, getSessionValue, setSessionSection } from '../../utils/perChildSession';
 import { getBackUrl, getRedirectUrlAfterFormSubmit } from '../../utils/sessionHelpers';
 
 // Helper to get the field name for a specific child index
@@ -27,7 +27,11 @@ const safeString = (value: unknown): string => {
 const whatWillHappenRoutes = (router: Router) => {
   router.get(paths.SPECIAL_DAYS_WHAT_WILL_HAPPEN, checkFormProgressFromConfig(FORM_STEPS.SPECIAL_DAYS_WHAT_WILL_HAPPEN), (request, response) => {
     const { numberOfChildren, namesOfChildren, specialDays } = request.session;
-    const existingAnswers = specialDays?.whatWillHappen;
+    const isD2 = isDesign2(request.session);
+    const activeChildIndex = isD2 ? (request.session.currentChildIndex ?? 0) : 0;
+    const activeChildName = isD2 ? namesOfChildren[activeChildIndex] : null;
+    const sessionSpecialDays = isD2 ? getSessionValue<any>(request.session, 'specialDays') as typeof specialDays : specialDays;
+    const existingAnswers = sessionSpecialDays?.whatWillHappen;
 
     // Build form values from existing session data
     const formValues: Record<string, string> = {};
@@ -62,13 +66,16 @@ const whatWillHappenRoutes = (router: Router) => {
     response.render('pages/specialDays/whatWillHappen', {
       errors: request.flash('errors'),
       formValues: { ...formValues, ...request.flash('formValues')?.[0] },
-      title: request.__('specialDays.whatWillHappen.title'),
+      title: isD2 ? `What will happen for ${activeChildName} on special days?` : request.__('specialDays.whatWillHappen.title'),
       backLinkHref: getBackUrl(request.session, paths.TASK_LIST),
       numberOfChildren,
       namesOfChildren,
       childOptions,
       childrenWithAnswers,
-      showPerChildOption: numberOfChildren > 1 && isPerChildPoCEnabled(request.session),
+      childProgressCaption: isD2 ? `Child ${activeChildIndex + 1} of ${numberOfChildren}` : null,
+      showPerChildOption: numberOfChildren > 1 && !isDesign3(request.session) && isPerChildPoCEnabled(request.session),
+      showDesign3Option: numberOfChildren > 1 && isDesign3(request.session) && isPerChildPoCEnabled(request.session),
+      designMode: request.session.perChildDesignMode || 'design1',
     });
   });
 
@@ -108,6 +115,20 @@ const whatWillHappenRoutes = (router: Router) => {
         .catch(next);
     },
     (request, response) => {
+      // Design 3: handle "specify per child" - switch to per-child (Design 2) mode
+      if (isDesign3(request.session) && request.body['specify-per-child'] === 'yes') {
+        request.session.perChildDesignMode = 'design2' as any;
+        request.session.currentChildIndex = 0;
+        if (!request.session.childPlans || request.session.childPlans.length === 0) {
+          request.session.childPlans = (request.session.namesOfChildren || []).map((name: string, index: number) => ({
+            childIndex: index,
+            childName: name,
+            isComplete: false,
+          }));
+        }
+        return response.redirect(paths.SPECIAL_DAYS_WHAT_WILL_HAPPEN);
+      }
+
       const errors = validationResult(request);
 
       if (!errors.isEmpty()) {
@@ -125,16 +146,36 @@ const whatWillHappenRoutes = (router: Router) => {
       // Check for additional per-child entries
       // We look for patterns like child-selector-1, child-selector-2, etc.
       // and their corresponding answer fields
-      const additionalEntries = Object.keys(request.body)
-        .filter(key => key.startsWith('child-selector-'))
-        .map(key => {
-          const entryIndex = parseInt(key.replace('child-selector-', ''), 10);
-          const childIndex = parseInt(request.body[key], 10);
-          const answerFieldName = getFieldName(entryIndex);
-          const answer = safeString(request.body[answerFieldName]);
-          return { childIndex, answer, entryIndex };
-        })
-        .filter(entry => !isNaN(entry.childIndex) && entry.answer);
+      let additionalEntries: Array<{childIndex: number, answer: string, entryIndex: number}>;
+
+      if (isDesign4(request.session)) {
+        // Design 4: checkboxes can select multiple children per entry
+        additionalEntries = Object.keys(request.body)
+          .filter(key => /^child-checkbox-\d+$/.test(key))
+          .flatMap(key => {
+            const entryIndex = parseInt(key.replace('child-checkbox-', ''), 10);
+            const rawValues = request.body[key];
+            const childIndices = (Array.isArray(rawValues) ? rawValues : [rawValues])
+              .map((v: string) => parseInt(v, 10))
+              .filter((v: number) => !isNaN(v));
+            const answerFieldName = getFieldName(entryIndex);
+            const answer = safeString(request.body[answerFieldName]);
+            return childIndices.map(childIndex => ({ childIndex, answer, entryIndex }));
+          })
+          .filter(entry => entry.answer);
+      } else {
+        // Design 1: SELECT dropdown with single child
+        additionalEntries = Object.keys(request.body)
+          .filter(key => key.startsWith('child-selector-'))
+          .map(key => {
+            const entryIndex = parseInt(key.replace('child-selector-', ''), 10);
+            const childIndex = parseInt(request.body[key], 10);
+            const answerFieldName = getFieldName(entryIndex);
+            const answer = safeString(request.body[answerFieldName]);
+            return { childIndex, answer, entryIndex };
+          })
+          .filter(entry => !isNaN(entry.childIndex) && entry.answer);
+      }
 
       // Store per-child answers
       additionalEntries.forEach(entry => {
@@ -144,18 +185,49 @@ const whatWillHappenRoutes = (router: Router) => {
         };
       });
 
-      request.session.specialDays = {
-        ...request.session.specialDays,
-        whatWillHappen: {
-          default: {
-            noDecisionRequired: false,
-            answer: defaultAnswer,
-          },
-          ...(Object.keys(byChild).length > 0 ? { byChild } : {}),
+      const { numberOfChildren } = request.session;
+
+      const newWhatWillHappen = {
+        default: {
+          noDecisionRequired: false,
+          answer: defaultAnswer,
         },
+        ...(Object.keys(byChild).length > 0 ? { byChild } : {}),
       };
 
+      if (isDesign2(request.session)) {
+        const currentSpecialDays = getSessionValue<any>(request.session, 'specialDays') || {};
+        setSessionSection(request.session, 'specialDays', { ...currentSpecialDays, whatWillHappen: newWhatWillHappen });
+      } else {
+        request.session.specialDays = {
+          ...request.session.specialDays,
+          whatWillHappen: newWhatWillHappen,
+        };
+      }
+
       addCompletedStep(request, FORM_STEPS.SPECIAL_DAYS_WHAT_WILL_HAPPEN);
+
+      if (isDesign2(request.session)) {
+        if (request.body['apply-to-all'] === 'yes') {
+          const savedIndex = request.session.currentChildIndex ?? 0;
+          for (let i = 0; i < numberOfChildren; i++) {
+            if (i !== savedIndex) {
+              request.session.currentChildIndex = i;
+              const childSpecialDays = getSessionValue<any>(request.session, 'specialDays') || {};
+              setSessionSection(request.session, 'specialDays', { ...childSpecialDays, whatWillHappen: newWhatWillHappen });
+            }
+          }
+          request.session.currentChildIndex = 0;
+          return response.redirect(paths.TASK_LIST);
+        }
+        const nextChildIndex = (request.session.currentChildIndex ?? 0) + 1;
+        if (nextChildIndex < numberOfChildren) {
+          request.session.currentChildIndex = nextChildIndex;
+          return response.redirect(paths.SPECIAL_DAYS_WHAT_WILL_HAPPEN);
+        }
+        request.session.currentChildIndex = 0;
+        return response.redirect(paths.TASK_LIST);
+      }
 
       return response.redirect(getRedirectUrlAfterFormSubmit(request.session, paths.TASK_LIST));
     },

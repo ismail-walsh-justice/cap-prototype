@@ -14,7 +14,7 @@ const perChildDesignRoutes = (router: Router) => {
   router.post(paths.TOGGLE_DESIGN_MODE, (request, response) => {
     const newMode = request.body.designMode as PerChildDesignMode;
 
-    if (newMode !== 'design1' && newMode !== 'design2') {
+    if (!['design1', 'design2', 'design3', 'design4'].includes(newMode)) {
       return response.redirect(paths.TASK_LIST);
     }
 

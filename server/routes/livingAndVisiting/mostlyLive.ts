@@ -9,7 +9,7 @@ import FORM_STEPS from '../../constants/formSteps';
 import paths from '../../constants/paths';
 import checkFormProgressFromConfig  from '../../middleware/checkFormProgressFromConfig';
 import addCompletedStep from '../../utils/addCompletedStep';
-import { isDesign2, isPerChildPoCEnabled, getSessionValue, setSessionSection } from '../../utils/perChildSession';
+import { isDesign2, isDesign3, isDesign4, isPerChildPoCEnabled, getSessionValue, setSessionSection } from '../../utils/perChildSession';
 import { getBackUrl, getRedirectUrlAfterFormSubmit } from '../../utils/sessionHelpers';
 
 // Helper to get the field name for a specific child index
@@ -76,9 +76,13 @@ const mostlyLiveRoutes = (router: Router) => {
       text: name,
     }));
 
+    const isD2 = isDesign2(request.session);
+    const activeChildIndex = isD2 ? (request.session.currentChildIndex ?? 0) : 0;
+    const activeChildName = isD2 ? namesOfChildren[activeChildIndex] : null;
+
     response.render('pages/livingAndVisiting/mostlyLive', {
       errors: request.flash('errors'),
-      title: request.__('livingAndVisiting.mostlyLive.title'),
+      title: isD2 ? `Where will ${activeChildName} mostly live?` : request.__('livingAndVisiting.mostlyLive.title'),
       values: request.session,
       formValues: { ...formValues, ...flashValues },
       backLinkHref: getBackUrl(request.session, paths.TASK_LIST),
@@ -86,7 +90,10 @@ const mostlyLiveRoutes = (router: Router) => {
       namesOfChildren,
       childOptions,
       childrenWithAnswers,
-      showPerChildOption: numberOfChildren > 1 && !isDesign2(request.session) && isPerChildPoCEnabled(request.session),
+      childProgressCaption: isD2 ? `Child ${activeChildIndex + 1} of ${numberOfChildren}` : null,
+      showPerChildOption: numberOfChildren > 1 && !isDesign2(request.session) && !isDesign3(request.session) && isPerChildPoCEnabled(request.session),
+      showDesign3Option: numberOfChildren > 1 && isDesign3(request.session) && isPerChildPoCEnabled(request.session),
+      designMode: request.session.perChildDesignMode || 'design1',
     });
   });
 
@@ -135,6 +142,20 @@ const mostlyLiveRoutes = (router: Router) => {
         .catch(next);
     },
     (request, response) => {
+      // Design 3: handle "specify per child" - switch to per-child (Design 2) mode
+      if (isDesign3(request.session) && request.body['specify-per-child'] === 'yes') {
+        request.session.perChildDesignMode = 'design2' as any;
+        request.session.currentChildIndex = 0;
+        if (!request.session.childPlans || request.session.childPlans.length === 0) {
+          request.session.childPlans = (request.session.namesOfChildren || []).map((name: string, index: number) => ({
+            childIndex: index,
+            childName: name,
+            isComplete: false,
+          }));
+        }
+        return response.redirect(paths.LIVING_VISITING_MOSTLY_LIVE);
+      }
+
       const errors = validationResult(request);
 
       if (!errors.isEmpty()) {
@@ -151,18 +172,40 @@ const mostlyLiveRoutes = (router: Router) => {
       const byChild: Record<number, MostlyLiveAnswer> = {};
 
       // Check for additional per-child entries
-      const additionalEntries = Object.keys(request.body)
-        .filter(key => key.startsWith('child-selector-'))
-        .map(key => {
-          const entryIndex = parseInt(key.replace('child-selector-', ''), 10);
-          const childIndex = parseInt(request.body[key], 10);
-          const whereFieldName = getFieldName(entryIndex);
-          const describeFieldName = getDescribeFieldName(entryIndex);
-          const where = request.body[whereFieldName] as whereMostlyLive;
-          const describeArrangement = safeString(request.body[describeFieldName]);
-          return { childIndex, where, describeArrangement, entryIndex };
-        })
-        .filter(entry => !isNaN(entry.childIndex) && entry.where);
+      let additionalEntries: Array<{childIndex: number, where: whereMostlyLive, describeArrangement: string | undefined, entryIndex: number}>;
+
+      if (isDesign4(request.session)) {
+        // Design 4: checkboxes can select multiple children per entry
+        additionalEntries = Object.keys(request.body)
+          .filter(key => /^child-checkbox-\d+$/.test(key))
+          .flatMap(key => {
+            const entryIndex = parseInt(key.replace('child-checkbox-', ''), 10);
+            const rawValues = request.body[key];
+            const childIndices = (Array.isArray(rawValues) ? rawValues : [rawValues])
+              .map((v: string) => parseInt(v, 10))
+              .filter((v: number) => !isNaN(v));
+            const whereFieldName = getFieldName(entryIndex);
+            const describeFieldName = getDescribeFieldName(entryIndex);
+            const where = request.body[whereFieldName] as whereMostlyLive;
+            const describeArrangement = safeString(request.body[describeFieldName]);
+            return childIndices.map(childIndex => ({ childIndex, where, describeArrangement, entryIndex }));
+          })
+          .filter(entry => entry.where);
+      } else {
+        // Design 1: SELECT dropdown with single child
+        additionalEntries = Object.keys(request.body)
+          .filter(key => key.startsWith('child-selector-'))
+          .map(key => {
+            const entryIndex = parseInt(key.replace('child-selector-', ''), 10);
+            const childIndex = parseInt(request.body[key], 10);
+            const whereFieldName = getFieldName(entryIndex);
+            const describeFieldName = getDescribeFieldName(entryIndex);
+            const where = request.body[whereFieldName] as whereMostlyLive;
+            const describeArrangement = safeString(request.body[describeFieldName]);
+            return { childIndex, where, describeArrangement, entryIndex };
+          })
+          .filter(entry => !isNaN(entry.childIndex) && entry.where);
+      }
 
       // Store per-child answers
       additionalEntries.forEach(entry => {
@@ -179,14 +222,16 @@ const mostlyLiveRoutes = (router: Router) => {
       const currentDefaultWhere = currentMostlyLive?.default?.where || currentMostlyLive?.where;
       const shouldClearDownstream = defaultWhere !== currentDefaultWhere;
 
-      setSessionSection(request.session, 'livingAndVisiting', {
-        mostlyLive: {
-          default: {
-            where: defaultWhere,
-            describeArrangement: defaultWhere === 'other' ? defaultDescribe : undefined,
-          },
-          ...(Object.keys(byChild).length > 0 ? { byChild } : {}),
+      const newMostlyLive = {
+        default: {
+          where: defaultWhere,
+          describeArrangement: defaultWhere === 'other' ? defaultDescribe : undefined,
         },
+        ...(Object.keys(byChild).length > 0 ? { byChild } : {}),
+      };
+
+      setSessionSection(request.session, 'livingAndVisiting', {
+        mostlyLive: newMostlyLive,
         // Clear downstream if default answer changed
         ...(shouldClearDownstream ? {} : {
           whichSchedule: livingAndVisiting?.whichSchedule,
@@ -196,6 +241,28 @@ const mostlyLiveRoutes = (router: Router) => {
       });
 
       addCompletedStep(request, FORM_STEPS.LIVING_VISITING_MOSTLY_LIVE);
+
+      if (isDesign2(request.session)) {
+        if (request.body['apply-to-all'] === 'yes') {
+          const savedIndex = request.session.currentChildIndex ?? 0;
+          for (let i = 0; i < request.session.numberOfChildren; i++) {
+            if (i !== savedIndex) {
+              request.session.currentChildIndex = i;
+              const childLAV = getSessionValue<any>(request.session, 'livingAndVisiting') || {};
+              setSessionSection(request.session, 'livingAndVisiting', { ...childLAV, mostlyLive: newMostlyLive });
+            }
+          }
+          request.session.currentChildIndex = 0;
+          return response.redirect(paths.TASK_LIST);
+        }
+        const nextChildIndex = (request.session.currentChildIndex ?? 0) + 1;
+        if (nextChildIndex < request.session.numberOfChildren) {
+          request.session.currentChildIndex = nextChildIndex;
+          return response.redirect(paths.LIVING_VISITING_MOSTLY_LIVE);
+        }
+        request.session.currentChildIndex = 0;
+        return response.redirect(paths.TASK_LIST);
+      }
 
       switch (defaultWhere) {
         case 'other':

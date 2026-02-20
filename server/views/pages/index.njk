@@ -96,50 +96,66 @@
         {% endif %}
 
       {% if showUrToggle %}
-        <details class="govuk-details govuk-!-margin-bottom-4" data-module="govuk-details">
-          <summary class="govuk-details__summary">
-            <span class="govuk-details__summary-text">Switch service version (User Research)</span>
-          </summary>
-          <div class="govuk-details__text">
-            <div class="govuk-radios govuk-radios--small" data-module="govuk-radios">
-              <div class="govuk-radios__item">
-                <input class="govuk-radios__input" id="service-version-current" name="serviceVersionChoice" type="radio" value="current" {{ 'checked' if not usePerChildPoC }}>
-                <label class="govuk-label govuk-radios__label" for="service-version-current">
-                  Current service
-                </label>
-              </div>
-              <div class="govuk-radios__item">
-                <input class="govuk-radios__input" id="service-version-poc" name="serviceVersionChoice" type="radio" value="poc" {{ 'checked' if usePerChildPoC }}>
-                <label class="govuk-label govuk-radios__label" for="service-version-poc">
-                  Per-child design
-                </label>
-              </div>
+        <div class="govuk-inset-text govuk-!-margin-top-6">
+          <h2 class="govuk-heading-s">User research: select a design to test</h2>
+          <div class="govuk-radios govuk-radios--small govuk-!-margin-bottom-4" data-module="govuk-radios">
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="design-current" name="serviceVersionChoice" type="radio" value="current" {{ 'checked' if currentDesignMode == 'current' }}>
+              <label class="govuk-label govuk-radios__label" for="design-current">
+                <strong>Current service</strong>
+                <span class="govuk-hint govuk-!-margin-bottom-0">Questions answered once for all children. No per-child options.</span>
+              </label>
+            </div>
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="design-1" name="serviceVersionChoice" type="radio" value="design1" {{ 'checked' if currentDesignMode == 'design1' }}>
+              <label class="govuk-label govuk-radios__label" for="design-1">
+                <strong>Design 1: Add answer for a specific child (dropdown)</strong>
+                <span class="govuk-hint govuk-!-margin-bottom-0">Answer once for all children, then use a dropdown to add different answers for specific children.</span>
+              </label>
+            </div>
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="design-2" name="serviceVersionChoice" type="radio" value="design2" {{ 'checked' if currentDesignMode == 'design2' }}>
+              <label class="govuk-label govuk-radios__label" for="design-2">
+                <strong>Design 2: Answer for each child separately</strong>
+                <span class="govuk-hint govuk-!-margin-bottom-0">Complete all questions for each child one at a time. You can copy answers between children.</span>
+              </label>
+            </div>
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="design-3" name="serviceVersionChoice" type="radio" value="design3" {{ 'checked' if currentDesignMode == 'design3' }}>
+              <label class="govuk-label govuk-radios__label" for="design-3">
+                <strong>Design 3: Answer once, then specify per child</strong>
+                <span class="govuk-hint govuk-!-margin-bottom-0">Answer once for all children. An "Or" option on each question lets you specify different answers for each child.</span>
+              </label>
+            </div>
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="design-4" name="serviceVersionChoice" type="radio" value="design4" {{ 'checked' if currentDesignMode == 'design4' }}>
+              <label class="govuk-label govuk-radios__label" for="design-4">
+                <strong>Design 4: Add answer for a specific child (checkboxes)</strong>
+                <span class="govuk-hint govuk-!-margin-bottom-0">Answer once for all children, then use checkboxes to select which children get a specific answer.</span>
+              </label>
             </div>
           </div>
-        </details>
-      {% endif %}
 
-      {% if showUrToggle %}
-        <form method="post" action="{{ paths.START }}" id="start-form">
-          <input type="hidden" name="_csrf" value="{{ csrfToken }}" />
-          <input type="hidden" name="serviceVersion" id="service-version-hidden" value="{{ 'poc' if usePerChildPoC else 'current' }}" />
-          {{
-            govukButton({
-              text: "Start now",
-              classes: "govuk-button--start",
-              isStartButton: true
-            })
-          }}
-        </form>
+          <form method="post" action="{{ paths.START }}" id="start-form">
+            <input type="hidden" name="_csrf" value="{{ csrfToken }}" />
+            <input type="hidden" name="serviceVersion" id="service-version-hidden" value="{{ currentDesignMode or 'current' }}" />
+            {{
+              govukButton({
+                text: "Start now",
+                classes: "govuk-button--start",
+                isStartButton: true
+              })
+            }}
+          </form>
 
-        <script nonce="{{ cspNonce }}">
-          // Update hidden input when radio button selection changes
-          document.querySelectorAll('input[name="serviceVersionChoice"]').forEach(function(radio) {
-            radio.addEventListener('change', function() {
-              document.getElementById('service-version-hidden').value = this.value;
+          <script nonce="{{ cspNonce }}">
+            document.querySelectorAll('input[name="serviceVersionChoice"]').forEach(function(radio) {
+              radio.addEventListener('change', function() {
+                document.getElementById('service-version-hidden').value = this.value;
+              });
             });
-          });
-        </script>
+          </script>
+        </div>
       {% else %}
         {{
           govukButton({

@@ -17,6 +17,7 @@
       >
         <input type="hidden" name="_csrf" value="{{ csrfToken }}" />
 
+        {% if childProgressCaption %}<span class="govuk-caption-l">{{ childProgressCaption }}</span>{% endif %}
         <h1 class="govuk-heading-l">{{ title }}</h1>
 
         {# Default/All children answer #}
@@ -94,6 +95,19 @@
           {# Existing per-child entries will be rendered here by JavaScript on page load #}
         </div>
 
+        {# Design 3: Or specify per child #}
+        {% if showDesign3Option %}
+          <p class="govuk-body govuk-!-margin-bottom-2">Or</p>
+          <div class="govuk-radios" data-module="govuk-radios">
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="specify-per-child" name="specify-per-child" type="radio" value="yes">
+              <label class="govuk-label govuk-radios__label" for="specify-per-child">
+                Specify an answer for each child separately
+              </label>
+            </div>
+          </div>
+        {% endif %}
+
         {# Button group with proper spacing #}
         <div class="govuk-button-group govuk-!-margin-top-6">
           {% if showPerChildOption %}
@@ -106,11 +120,23 @@
               data-child-options="{{ childOptions | dump | escape }}"
               data-names-of-children="{{ namesOfChildren | dump | escape }}"
               data-field-base-name="{{ formFields.WHERE_HANDOVER }}"
+              data-design-mode="{{ designMode }}"
             >
               Add answer for a specific child
             </button>
           {% endif %}
         </div>
+
+        {% if childProgressCaption %}
+          <div class="govuk-checkboxes govuk-!-margin-bottom-4" data-module="govuk-checkboxes">
+            <div class="govuk-checkboxes__item">
+              <input class="govuk-checkboxes__input" id="apply-to-all" name="apply-to-all" type="checkbox" value="yes">
+              <label class="govuk-label govuk-checkboxes__label" for="apply-to-all">
+                Apply this answer to all children
+              </label>
+            </div>
+          </div>
+        {% endif %}
 
         {{ govukButton({text: __('continue')}) }}
       </form>
@@ -138,6 +164,76 @@
             <option value="">Select a child</option>
             {# Options populated by JavaScript #}
           </select>
+        </div>
+        <div class="govuk-form-group">
+          <fieldset class="govuk-fieldset">
+            <legend class="govuk-fieldset__legend govuk-visually-hidden">
+              Where will the handover take place?
+            </legend>
+            <div class="govuk-hint">
+              <p>{{ __('handoverAndHolidays.whereHandover.explainer') }}</p>
+              <p>{{ __('selectAllThatApply') }}</p>
+            </div>
+            <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="FIELD_NAME-neutral" name="FIELD_NAME" type="checkbox" value="neutral">
+                <label class="govuk-label govuk-checkboxes__label" for="FIELD_NAME-neutral">
+                  {{ __('handoverAndHolidays.whereHandover.neutralLocation') }}
+                </label>
+              </div>
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="FIELD_NAME-initialHome" name="FIELD_NAME" type="checkbox" value="initialHome">
+                <label class="govuk-label govuk-checkboxes__label" for="FIELD_NAME-initialHome">
+                  {{ __('handoverAndHolidays.whereHandover.atHome', {adult: values.initialAdultName}) }}
+                </label>
+              </div>
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="FIELD_NAME-secondaryHome" name="FIELD_NAME" type="checkbox" value="secondaryHome">
+                <label class="govuk-label govuk-checkboxes__label" for="FIELD_NAME-secondaryHome">
+                  {{ __('handoverAndHolidays.whereHandover.atHome', {adult: values.secondaryAdultName}) }}
+                </label>
+              </div>
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="FIELD_NAME-school" name="FIELD_NAME" type="checkbox" value="school">
+                <label class="govuk-label govuk-checkboxes__label" for="FIELD_NAME-school">
+                  {{ __('handoverAndHolidays.whereHandover.atSchool') }}
+                </label>
+              </div>
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="FIELD_NAME-someoneElse" name="FIELD_NAME" type="checkbox" value="someoneElse" data-aria-controls="conditional-FIELD_NAME-someoneElse" data-behaviour="exclusive">
+                <label class="govuk-label govuk-checkboxes__label" for="FIELD_NAME-someoneElse">
+                  {{ __('handoverAndHolidays.whereHandover.someoneElse') }}
+                </label>
+              </div>
+              <div class="govuk-checkboxes__conditional govuk-checkboxes__conditional--hidden" id="conditional-FIELD_NAME-someoneElse">
+                <div class="govuk-form-group">
+                  <label class="govuk-label" for="SOMEONE_ELSE_FIELD_NAME">
+                    {{ __('handoverAndHolidays.whereHandover.someoneElseName') }}
+                  </label>
+                  <textarea class="govuk-textarea" id="SOMEONE_ELSE_FIELD_NAME" name="SOMEONE_ELSE_FIELD_NAME" rows="5"></textarea>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+        <button type="button" class="govuk-button govuk-button--warning govuk-!-margin-bottom-4 remove-child-entry-btn">
+          Remove
+        </button>
+      </div>
+    </template>
+
+    {# Design 4: Per-child entry template with checkboxes for child selection #}
+    <template id="per-child-entry-template-d4">
+      <div class="per-child-entry govuk-!-margin-top-6 govuk-!-padding-top-6 govuk-!-padding-bottom-2" style="border-top: 2px solid #b1b4b6;">
+        <div class="govuk-form-group">
+          <fieldset class="govuk-fieldset">
+            <legend class="govuk-fieldset__legend govuk-label govuk-!-font-weight-bold">
+              This answer is for:
+            </legend>
+            <div class="govuk-checkboxes d4-child-checkboxes" data-module="govuk-checkboxes">
+              {# Child checkboxes populated by JavaScript #}
+            </div>
+          </fieldset>
         </div>
         <div class="govuk-form-group">
           <fieldset class="govuk-fieldset">

@@ -26,6 +26,20 @@ export function isDesign2(session: SessionLike): boolean {
 }
 
 /**
+ * Check if the session is using Design 3 (answer once + "Or specify per child" option)
+ */
+export function isDesign3(session: SessionLike): boolean {
+  return session.perChildDesignMode === 'design3';
+}
+
+/**
+ * Check if the session is using Design 4 (inline per-child with checkboxes instead of dropdown)
+ */
+export function isDesign4(session: SessionLike): boolean {
+  return session.perChildDesignMode === 'design4';
+}
+
+/**
  * Check if the session is using inline per-child mode (Design 1)
  * This is the mode where users can add different answers for different children on the same page
  * using the "Add answer for a specific child" button

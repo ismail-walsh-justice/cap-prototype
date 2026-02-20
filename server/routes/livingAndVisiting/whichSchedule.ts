@@ -8,7 +8,7 @@ import FORM_STEPS from '../../constants/formSteps';
 import paths from '../../constants/paths';
 import checkFormProgressFromConfig  from '../../middleware/checkFormProgressFromConfig';
 import addCompletedStep from '../../utils/addCompletedStep';
-import { isDesign2, isPerChildPoCEnabled, getSessionValue, setSessionSection } from '../../utils/perChildSession';
+import { isDesign2, isDesign3, isDesign4, isPerChildPoCEnabled, getSessionValue, setSessionSection } from '../../utils/perChildSession';
 import { getBackUrl, getRedirectUrlAfterFormSubmit } from '../../utils/sessionHelpers';
 
 // Helper to get the field name for a specific child index
@@ -28,6 +28,9 @@ const safeString = (value: unknown): string => {
 const whichScheduleRoutes = (router: Router) => {
   router.get(paths.LIVING_VISITING_WHICH_SCHEDULE, checkFormProgressFromConfig(FORM_STEPS.LIVING_VISITING_WHICH_SCHEDULE), (request, response) => {
     const { numberOfChildren, namesOfChildren } = request.session;
+    const isD2 = isDesign2(request.session);
+    const activeChildIndex = isD2 ? (request.session.currentChildIndex ?? 0) : 0;
+    const activeChildName = isD2 ? namesOfChildren[activeChildIndex] : null;
     const livingAndVisiting = getSessionValue<any>(request.session, 'livingAndVisiting');
     const existingAnswers = livingAndVisiting?.whichSchedule;
 
@@ -69,14 +72,17 @@ const whichScheduleRoutes = (router: Router) => {
 
     response.render('pages/livingAndVisiting/whichSchedule', {
       errors: request.flash('errors'),
-      title: request.__('livingAndVisiting.whichSchedule.title'),
+      title: isD2 ? `What is ${activeChildName}'s schedule?` : request.__('livingAndVisiting.whichSchedule.title'),
       formValues: { ...formValues, ...flashValues },
       backLinkHref: getBackUrl(request.session, paths.LIVING_VISITING_MOSTLY_LIVE),
       numberOfChildren,
       namesOfChildren,
       childOptions,
       childrenWithAnswers,
-      showPerChildOption: numberOfChildren > 1 && !isDesign2(request.session) && isPerChildPoCEnabled(request.session),
+      childProgressCaption: isD2 ? `Child ${activeChildIndex + 1} of ${numberOfChildren}` : null,
+      showPerChildOption: numberOfChildren > 1 && !isD2 && !isDesign3(request.session) && isPerChildPoCEnabled(request.session),
+      showDesign3Option: numberOfChildren > 1 && isDesign3(request.session) && isPerChildPoCEnabled(request.session),
+      designMode: request.session.perChildDesignMode || 'design1',
     });
   });
 
@@ -116,6 +122,20 @@ const whichScheduleRoutes = (router: Router) => {
         .catch(next);
     },
     (request, response) => {
+      // Design 3: handle "specify per child" - switch to per-child (Design 2) mode
+      if (isDesign3(request.session) && request.body['specify-per-child'] === 'yes') {
+        request.session.perChildDesignMode = 'design2' as any;
+        request.session.currentChildIndex = 0;
+        if (!request.session.childPlans || request.session.childPlans.length === 0) {
+          request.session.childPlans = (request.session.namesOfChildren || []).map((name: string, index: number) => ({
+            childIndex: index,
+            childName: name,
+            isComplete: false,
+          }));
+        }
+        return response.redirect(paths.LIVING_VISITING_WHICH_SCHEDULE);
+      }
+
       const errors = validationResult(request);
 
       if (!errors.isEmpty()) {
@@ -131,16 +151,36 @@ const whichScheduleRoutes = (router: Router) => {
       const byChild: Record<number, WhichScheduleAnswer> = {};
 
       // Check for additional per-child entries
-      const additionalEntries = Object.keys(request.body)
-        .filter(key => key.startsWith('child-selector-'))
-        .map(key => {
-          const entryIndex = parseInt(key.replace('child-selector-', ''), 10);
-          const childIndex = parseInt(request.body[key], 10);
-          const answerFieldName = getFieldName(entryIndex);
-          const answer = safeString(request.body[answerFieldName]);
-          return { childIndex, answer, entryIndex };
-        })
-        .filter(entry => !isNaN(entry.childIndex) && entry.answer);
+      let additionalEntries: Array<{childIndex: number, answer: string, entryIndex: number}>;
+
+      if (isDesign4(request.session)) {
+        // Design 4: checkboxes can select multiple children per entry
+        additionalEntries = Object.keys(request.body)
+          .filter(key => /^child-checkbox-\d+$/.test(key))
+          .flatMap(key => {
+            const entryIndex = parseInt(key.replace('child-checkbox-', ''), 10);
+            const rawValues = request.body[key];
+            const childIndices = (Array.isArray(rawValues) ? rawValues : [rawValues])
+              .map((v: string) => parseInt(v, 10))
+              .filter((v: number) => !isNaN(v));
+            const answerFieldName = getFieldName(entryIndex);
+            const answer = safeString(request.body[answerFieldName]);
+            return childIndices.map(childIndex => ({ childIndex, answer, entryIndex }));
+          })
+          .filter(entry => entry.answer);
+      } else {
+        // Design 1: SELECT dropdown with single child
+        additionalEntries = Object.keys(request.body)
+          .filter(key => key.startsWith('child-selector-'))
+          .map(key => {
+            const entryIndex = parseInt(key.replace('child-selector-', ''), 10);
+            const childIndex = parseInt(request.body[key], 10);
+            const answerFieldName = getFieldName(entryIndex);
+            const answer = safeString(request.body[answerFieldName]);
+            return { childIndex, answer, entryIndex };
+          })
+          .filter(entry => !isNaN(entry.childIndex) && entry.answer);
+      }
 
       // Store per-child answers
       additionalEntries.forEach(entry => {
@@ -150,18 +190,39 @@ const whichScheduleRoutes = (router: Router) => {
         };
       });
 
-      const livingAndVisiting = getSessionValue<any>(request.session, 'livingAndVisiting') || {};
-      setSessionSection(request.session, 'livingAndVisiting', {
-        ...livingAndVisiting,
-        whichSchedule: {
-          default: {
-            noDecisionRequired: false,
-            answer: defaultAnswer,
-          },
-          ...(Object.keys(byChild).length > 0 ? { byChild } : {}),
+      const newWhichSchedule = {
+        default: {
+          noDecisionRequired: false,
+          answer: defaultAnswer,
         },
-      });
+        ...(Object.keys(byChild).length > 0 ? { byChild } : {}),
+      };
+
+      const livingAndVisiting = getSessionValue<any>(request.session, 'livingAndVisiting') || {};
+      setSessionSection(request.session, 'livingAndVisiting', { ...livingAndVisiting, whichSchedule: newWhichSchedule });
       addCompletedStep(request, FORM_STEPS.LIVING_VISITING_WHICH_SCHEDULE);
+
+      if (isDesign2(request.session)) {
+        if (request.body['apply-to-all'] === 'yes') {
+          const savedIndex = request.session.currentChildIndex ?? 0;
+          for (let i = 0; i < request.session.numberOfChildren; i++) {
+            if (i !== savedIndex) {
+              request.session.currentChildIndex = i;
+              const childLAV = getSessionValue<any>(request.session, 'livingAndVisiting') || {};
+              setSessionSection(request.session, 'livingAndVisiting', { ...childLAV, whichSchedule: newWhichSchedule });
+            }
+          }
+          request.session.currentChildIndex = 0;
+          return response.redirect(paths.TASK_LIST);
+        }
+        const nextChildIndex = (request.session.currentChildIndex ?? 0) + 1;
+        if (nextChildIndex < request.session.numberOfChildren) {
+          request.session.currentChildIndex = nextChildIndex;
+          return response.redirect(paths.LIVING_VISITING_WHICH_SCHEDULE);
+        }
+        request.session.currentChildIndex = 0;
+        return response.redirect(paths.TASK_LIST);
+      }
 
       return response.redirect(getRedirectUrlAfterFormSubmit(request.session, paths.TASK_LIST));
     },

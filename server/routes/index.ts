@@ -38,19 +38,29 @@ const routes = (): Router => {
       return response.redirect(paths.SAFETY_CHECK);
     }
     addCompletedStep(request, FORM_STEPS.START);
+    const { usePerChildPoC, perChildDesignMode } = request.session;
+    let currentDesignMode = 'current';
+    if (usePerChildPoC) {
+      currentDesignMode = perChildDesignMode || 'design1';
+    }
     response.render('pages/index', {
-      showUrToggle: true, // Enable UR toggle for testing
-      usePerChildPoC: request.session.usePerChildPoC || false,
+      showUrToggle: true,
+      usePerChildPoC: usePerChildPoC || false,
+      currentDesignMode,
     });
   });
 
   // POST start page - handle service version selection
   router.post(paths.START, (request, response) => {
     const { serviceVersion } = request.body;
-    const newUsePerChildPoC = serviceVersion === 'poc';
+
+    // Map service version to session flags
+    const validDesigns = ['current', 'design1', 'design2', 'design3', 'design4', 'poc'];
+    const design = validDesigns.includes(serviceVersion) ? serviceVersion : 'current';
+    const newUsePerChildPoC = design !== 'current';
+    const newDesignMode = design !== 'current' && design !== 'poc' ? design : (design === 'poc' ? 'design1' : undefined);
 
     // Clear session data when starting fresh, but preserve session ID to keep CSRF token valid
-    // Delete all CAPSession properties except system fields
     delete request.session.numberOfChildren;
     delete request.session.namesOfChildren;
     delete request.session.initialAdultName;
@@ -66,6 +76,9 @@ const routes = (): Router => {
 
     // Set the new service version and initialize completedSteps with START
     request.session.usePerChildPoC = newUsePerChildPoC;
+    if (newDesignMode) {
+      request.session.perChildDesignMode = newDesignMode as any;
+    }
     request.session.completedSteps = [FORM_STEPS.START];
     request.session.planStartTime = Date.now();
     response.redirect(paths.SAFETY_CHECK);

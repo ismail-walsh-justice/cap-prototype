@@ -8,7 +8,7 @@ import FORM_STEPS from '../../constants/formSteps';
 import paths from '../../constants/paths';
 import checkFormProgressFromConfig  from '../../middleware/checkFormProgressFromConfig';
 import addCompletedStep from '../../utils/addCompletedStep';
-import { isPerChildPoCEnabled } from '../../utils/perChildSession';
+import { isDesign2, isDesign3, isDesign4, isPerChildPoCEnabled, getSessionValue, setSessionSection } from '../../utils/perChildSession';
 import { getBackUrl } from '../../utils/sessionHelpers';
 
 // Helper to get the field name for a specific child index
@@ -31,7 +31,11 @@ const safeString = (value: unknown): string => {
 const getBetweenHouseholdsRoutes = (router: Router) => {
   router.get(paths.HANDOVER_HOLIDAYS_GET_BETWEEN_HOUSEHOLDS, checkFormProgressFromConfig(FORM_STEPS.HANDOVER_HOLIDAYS_GET_BETWEEN_HOUSEHOLDS), (request, response) => {
     const { numberOfChildren, namesOfChildren, handoverAndHolidays } = request.session;
-    const existingAnswers = handoverAndHolidays?.getBetweenHouseholds;
+    const isD2 = isDesign2(request.session);
+    const activeChildIndex = isD2 ? (request.session.currentChildIndex ?? 0) : 0;
+    const activeChildName = isD2 ? namesOfChildren[activeChildIndex] : null;
+    const sessionHandoverAndHolidays = isD2 ? getSessionValue<any>(request.session, 'handoverAndHolidays') : handoverAndHolidays;
+    const existingAnswers = sessionHandoverAndHolidays?.getBetweenHouseholds;
 
     // Build form values from existing session data
     const formValues: Record<string, string> = {};
@@ -50,7 +54,7 @@ const getBetweenHouseholdsRoutes = (router: Router) => {
 
       // Set per-child answers
       if (existingAnswers.byChild) {
-        Object.entries(existingAnswers.byChild).forEach(([childIndex, answer]) => {
+        Object.entries(existingAnswers.byChild).forEach(([childIndex, answer]: [string, any]) => {
           const idx = parseInt(childIndex, 10);
           if (answer.how) {
             childrenWithAnswers.push(idx);
@@ -72,14 +76,17 @@ const getBetweenHouseholdsRoutes = (router: Router) => {
     response.render('pages/handoverAndHolidays/getBetweenHouseholds', {
       errors: request.flash('errors'),
       formValues: { ...formValues, ...request.flash('formValues')?.[0] },
-      title: request.__('handoverAndHolidays.getBetweenHouseholds.title'),
+      title: isD2 ? `How will ${activeChildName} get between the two households?` : request.__('handoverAndHolidays.getBetweenHouseholds.title'),
       values: request.session,
       backLinkHref: getBackUrl(request.session, paths.TASK_LIST),
       numberOfChildren,
       namesOfChildren,
       childOptions,
       childrenWithAnswers,
-      showPerChildOption: numberOfChildren > 1 && isPerChildPoCEnabled(request.session),
+      childProgressCaption: isD2 ? `Child ${activeChildIndex + 1} of ${numberOfChildren}` : null,
+      showPerChildOption: numberOfChildren > 1 && !isDesign3(request.session) && isPerChildPoCEnabled(request.session),
+      showDesign3Option: numberOfChildren > 1 && isDesign3(request.session) && isPerChildPoCEnabled(request.session),
+      designMode: request.session.perChildDesignMode || 'design1',
     });
   });
 
@@ -137,6 +144,20 @@ const getBetweenHouseholdsRoutes = (router: Router) => {
         .catch(next);
     },
     (request, response) => {
+      // Design 3: handle "specify per child" - switch to per-child (Design 2) mode
+      if (isDesign3(request.session) && request.body['specify-per-child'] === 'yes') {
+        request.session.perChildDesignMode = 'design2' as any;
+        request.session.currentChildIndex = 0;
+        if (!request.session.childPlans || request.session.childPlans.length === 0) {
+          request.session.childPlans = (request.session.namesOfChildren || []).map((name: string, index: number) => ({
+            childIndex: index,
+            childName: name,
+            isComplete: false,
+          }));
+        }
+        return response.redirect(paths.HANDOVER_HOLIDAYS_GET_BETWEEN_HOUSEHOLDS);
+      }
+
       const errors = validationResult(request);
 
       if (!errors.isEmpty()) {
@@ -155,18 +176,40 @@ const getBetweenHouseholdsRoutes = (router: Router) => {
       // Check for additional per-child entries
       // We look for patterns like child-selector-1, child-selector-2, etc.
       // and their corresponding answer fields
-      const additionalEntries = Object.keys(request.body)
-        .filter(key => key.startsWith('child-selector-'))
-        .map(key => {
-          const entryIndex = parseInt(key.replace('child-selector-', ''), 10);
-          const childIndex = parseInt(request.body[key], 10);
-          const howFieldName = getFieldName(entryIndex);
-          const describeFieldName = getDescribeArrangementFieldName(entryIndex);
-          const how = safeString(request.body[howFieldName]);
-          const describeArrangement = safeString(request.body[describeFieldName]);
-          return { childIndex, how, describeArrangement, entryIndex };
-        })
-        .filter(entry => !isNaN(entry.childIndex) && entry.how);
+      let additionalEntries: Array<{childIndex: number, how: string, describeArrangement: string, entryIndex: number}>;
+
+      if (isDesign4(request.session)) {
+        // Design 4: checkboxes can select multiple children per entry
+        additionalEntries = Object.keys(request.body)
+          .filter(key => /^child-checkbox-\d+$/.test(key))
+          .flatMap(key => {
+            const entryIndex = parseInt(key.replace('child-checkbox-', ''), 10);
+            const rawValues = request.body[key];
+            const childIndices = (Array.isArray(rawValues) ? rawValues : [rawValues])
+              .map((v: string) => parseInt(v, 10))
+              .filter((v: number) => !isNaN(v));
+            const howFieldName = getFieldName(entryIndex);
+            const describeFieldName = getDescribeArrangementFieldName(entryIndex);
+            const how = safeString(request.body[howFieldName]);
+            const describeArrangement = safeString(request.body[describeFieldName]);
+            return childIndices.map(childIndex => ({ childIndex, how, describeArrangement, entryIndex }));
+          })
+          .filter(entry => entry.how);
+      } else {
+        // Design 1: SELECT dropdown with single child
+        additionalEntries = Object.keys(request.body)
+          .filter(key => key.startsWith('child-selector-'))
+          .map(key => {
+            const entryIndex = parseInt(key.replace('child-selector-', ''), 10);
+            const childIndex = parseInt(request.body[key], 10);
+            const howFieldName = getFieldName(entryIndex);
+            const describeFieldName = getDescribeArrangementFieldName(entryIndex);
+            const how = safeString(request.body[howFieldName]);
+            const describeArrangement = safeString(request.body[describeFieldName]);
+            return { childIndex, how, describeArrangement, entryIndex };
+          })
+          .filter(entry => !isNaN(entry.childIndex) && entry.how);
+      }
 
       // Store per-child answers
       additionalEntries.forEach(entry => {
@@ -177,8 +220,14 @@ const getBetweenHouseholdsRoutes = (router: Router) => {
         };
       });
 
-      request.session.handoverAndHolidays = {
-        ...request.session.handoverAndHolidays,
+      const { numberOfChildren } = request.session;
+
+      const currentHandoverAndHolidays = isDesign2(request.session)
+        ? (getSessionValue<any>(request.session, 'handoverAndHolidays') || {})
+        : (request.session.handoverAndHolidays || {});
+
+      const newHAH = {
+        ...currentHandoverAndHolidays,
         getBetweenHouseholds: {
           default: {
             noDecisionRequired: false,
@@ -189,7 +238,35 @@ const getBetweenHouseholdsRoutes = (router: Router) => {
         },
       };
 
+      if (isDesign2(request.session)) {
+        setSessionSection(request.session, 'handoverAndHolidays', newHAH);
+      } else {
+        request.session.handoverAndHolidays = newHAH;
+      }
+
       addCompletedStep(request, FORM_STEPS.HANDOVER_HOLIDAYS_GET_BETWEEN_HOUSEHOLDS);
+
+      if (isDesign2(request.session)) {
+        if (request.body['apply-to-all'] === 'yes') {
+          const savedIndex = request.session.currentChildIndex ?? 0;
+          for (let i = 0; i < numberOfChildren; i++) {
+            if (i !== savedIndex) {
+              request.session.currentChildIndex = i;
+              const childHAH = getSessionValue<any>(request.session, 'handoverAndHolidays') || {};
+              setSessionSection(request.session, 'handoverAndHolidays', { ...childHAH, getBetweenHouseholds: newHAH.getBetweenHouseholds });
+            }
+          }
+          request.session.currentChildIndex = 0;
+          return response.redirect(paths.TASK_LIST);
+        }
+        const nextChildIndex = (request.session.currentChildIndex ?? 0) + 1;
+        if (nextChildIndex < numberOfChildren) {
+          request.session.currentChildIndex = nextChildIndex;
+          return response.redirect(paths.HANDOVER_HOLIDAYS_GET_BETWEEN_HOUSEHOLDS);
+        }
+        request.session.currentChildIndex = 0;
+        return response.redirect(paths.TASK_LIST);
+      }
 
       return response.redirect(paths.HANDOVER_HOLIDAYS_WHERE_HANDOVER);
     },

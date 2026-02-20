@@ -59,7 +59,9 @@ const taskListRoutes = (router: Router) => {
 
     // Determine which design mode we're in (default to design1)
     const designMode = perChildDesignMode || 'design1';
-    const isDesign2 = designMode === 'design2' && numberOfChildren > 1;
+    const isDesign2Mode = designMode === 'design2' && numberOfChildren > 1;
+    const isDesign3Mode = designMode === 'design3';
+    const isDesign4Mode = designMode === 'design4';
 
     // Design 1: Check completion status from main session
     const isMostlyLiveComplete = mostlyLiveComplete(request.session);
@@ -77,7 +79,7 @@ const taskListRoutes = (router: Router) => {
 
     // Design 2 specific data
     let design2Data = {};
-    if (isDesign2) {
+    if (isDesign2Mode) {
       // Initialize child plans if needed
       let plans = childPlans || [];
       if (plans.length === 0) {
@@ -135,7 +137,7 @@ const taskListRoutes = (router: Router) => {
       isPlanLongTermNoticeComplete &&
       isPlanReviewComplete;
 
-    const showContinueButton = isDesign2
+    const showContinueButton = isDesign2Mode
       ? allTasksComplete && (design2Data as any).allChildrenComplete
       : allTasksComplete;
 
@@ -143,6 +145,10 @@ const taskListRoutes = (router: Router) => {
       title: request.__('taskList.title', { names: formattedChildrenNames(request) }),
       // Design mode toggle - hidden for now, keeping Design 1 as the default
       designMode,
+      designModeLabel: designMode === 'design1' ? 'Design 1: Answer for all, then specify per child (dropdown)' :
+                       designMode === 'design2' ? 'Design 2: Answer for each child separately' :
+                       designMode === 'design3' ? 'Design 3: Answer once, then specify per child' :
+                       designMode === 'design4' ? 'Design 4: Answer for all, then specify per child (checkboxes)' : null,
       showDesignToggle: false,
       numberOfChildren,
       namesOfChildren,
