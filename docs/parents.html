@@ -47,15 +47,18 @@
 
           <form id="parents-form" novalidate>
 
-            <h1 class="govuk-heading-l">What are the parents' first names?</h1>
+            <h1 class="govuk-heading-l">About the adults who will care for the children</h1>
+
+            <p class="govuk-body">We do not store this information or share it with other government departments.</p>
 
             <div class="govuk-form-group" id="parent1-group">
-              <label class="govuk-label govuk-label--m" for="parent1Name">Parent 1's first name</label>
+              <label class="govuk-label" for="parent1Name">Your first name</label>
+              <div class="govuk-hint">If you are answering these questions for someone else, enter their first name</div>
               <input class="govuk-input govuk-input--width-20" id="parent1Name" name="parent1Name" type="text" autocomplete="off">
             </div>
 
             <div class="govuk-form-group" id="parent2-group">
-              <label class="govuk-label govuk-label--m" for="parent2Name">Parent 2's first name</label>
+              <label class="govuk-label" for="parent2Name">First name of the other parent or carer</label>
               <input class="govuk-input govuk-input--width-20" id="parent2Name" name="parent2Name" type="text" autocomplete="off">
             </div>
 
@@ -104,8 +107,8 @@
 
       var errEl = document.getElementById('form-error');
       var errors = [];
-      if (!parent1) errors.push('Enter Parent 1\'s name');
-      if (!parent2) errors.push('Enter Parent 2\'s name');
+      if (!parent1) errors.push('Enter your first name');
+      if (!parent2) errors.push('Enter the first name of the other parent or carer');
 
       if (errors.length) {
         errEl.style.display = '';

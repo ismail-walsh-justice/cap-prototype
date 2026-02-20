@@ -46,20 +46,20 @@
         <div class="govuk-grid-column-two-thirds">
 
           <form id="children-form" novalidate>
-            <div class="govuk-form-group" id="children-group">
-              <fieldset class="govuk-fieldset">
-                <legend class="govuk-fieldset__legend govuk-fieldset__legend--l">
-                  <h1 class="govuk-fieldset__heading">What are the children's first names?</h1>
-                </legend>
-                <div class="govuk-hint">Add all the children whose arrangements will be covered by this plan.</div>
-                <div id="children-list"></div>
-                <button type="button" class="govuk-button govuk-button--secondary govuk-!-margin-top-2" id="add-child-btn">Add a child</button>
-              </fieldset>
+
+            <h1 class="govuk-heading-l">About the children</h1>
+
+            <p class="govuk-body">We do not store this information or share it with other government departments.</p>
+
+            <div id="children-list"></div>
+
+            <button type="button" class="govuk-button govuk-button--secondary" id="add-child-btn">Add a child</button>
+
+            <div id="form-error" class="govuk-error-message govuk-!-margin-top-2" style="display:none;"></div>
+
+            <div class="govuk-!-margin-top-4">
+              <button type="submit" class="govuk-button">Continue</button>
             </div>
-
-            <div id="form-error" class="govuk-error-message" style="display:none;"></div>
-
-            <button type="submit" class="govuk-button">Continue</button>
           </form>
 
         </div>
@@ -95,26 +95,38 @@
       return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
+    var ORDINAL_LABELS = [
+      'First name of the first child',
+      'First name of the second child',
+      'First name of the third child'
+    ];
+
+    function childLabel(index) {
+      return ORDINAL_LABELS[index] || ('First name of child ' + (index + 1));
+    }
+
     function addChildRow(value, index) {
       var div = document.createElement('div');
-      div.className = 'govuk-form-group govuk-!-margin-bottom-3';
+      div.className = 'govuk-form-group';
       div.dataset.childIndex = index;
-      div.innerHTML = '<label class="govuk-label" for="child-' + index + '">Child ' + (index + 1) + '\u2019s first name</label>' +
+      div.innerHTML = '<label class="govuk-label" for="child-' + index + '">' + childLabel(index) + '</label>' +
         '<div style="display:flex;gap:8px;align-items:center">' +
         '<input class="govuk-input govuk-input--width-20 child-name-input" id="child-' + index + '" type="text" value="' + escHtml(value) + '" autocomplete="off">' +
-        '<button type="button" class="govuk-button govuk-button--warning govuk-!-margin-bottom-0 remove-child-btn" style="white-space:nowrap">Remove</button>' +
+        (index > 0 ? '<button type="button" class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 remove-child-btn" style="white-space:nowrap">Remove</button>' : '') +
         '</div>';
-      div.querySelector('.remove-child-btn').addEventListener('click', function() {
-        div.remove();
-        reIndexChildren();
-      });
+      if (index > 0) {
+        div.querySelector('.remove-child-btn').addEventListener('click', function() {
+          div.remove();
+          reIndexChildren();
+        });
+      }
       childrenList.appendChild(div);
     }
 
     function reIndexChildren() {
       Array.from(childrenList.querySelectorAll('[data-child-index]')).forEach(function(row, i) {
         row.dataset.childIndex = i;
-        row.querySelector('label').textContent = 'Child ' + (i + 1) + '\u2019s first name';
+        row.querySelector('label').textContent = childLabel(i);
         row.querySelector('label').setAttribute('for', 'child-' + i);
         row.querySelector('input').id = 'child-' + i;
       });
